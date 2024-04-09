@@ -1,0 +1,40 @@
+
+pipeline {
+    agent any
+    stages {
+        stage('pull git repos') { // From gitlab using a PAT
+            steps {
+                dir('ansible_inventories') {
+                    git branch: 'main', credentialsId: 'e0312701-e9de-4b62-b085-7d57883a3276', url: 'git@gitlab.com:dotocean/shared/students/louis-declerck/ansible_inventories.git'
+                }
+                dir('ansible-manage-k8s') {
+                    git branch: 'main', credentialsId: 'e0312701-e9de-4b62-b085-7d57883a3276', url: 'git@gitlab.com:dotocean/shared/students/louis-declerck/ansible-manage-k8s.git'
+                }
+            }
+        }
+        // stage('decrypt ansible inventory'){
+        //     steps {
+        //         sh '''#!/bin/bash
+        //         for i in $(find ./ansible_inventories -name vault.yml); do ansible-vault decrypt $i --vault-password-file ~/.ssh/id_rsa && echo $i decrypted ; done
+        //         '''
+        //     }
+        // }
+        stage('Run Ansible Playbook') {
+            steps {
+                ansiblePlaybook(
+                    playbook: 'ansible-manage-k8s/dns-certs-to-host/get-secret.yml', // Specify the relative path to your playbook within the Git repository
+                    inventory: 'ansible_inventories/dns_certs/inventory.yml', // Specify the relative path to your inventory file within the Git repository
+                    disableHostKeyChecking: true,
+                    credentialsId: 'e0312701-e9de-4b62-b085-7d57883a3276',
+                    become: false,
+                    vaultCredentialsId: '005d06d3-fd09-41a3-855a-9645edf46842'
+                )
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}

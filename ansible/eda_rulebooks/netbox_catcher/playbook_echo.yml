@@ -1,0 +1,12 @@
+---
+- name: Say thanks
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Debug a message
+      ansible.builtin.debug:
+        msg: "PROXMOX, Thank you, {{ ansible_eda.event.sender | default('my friend') }}!"
+
+    - name: Debug all variables
+      ansible.builtin.debug:
+        var: ansible_eda.event

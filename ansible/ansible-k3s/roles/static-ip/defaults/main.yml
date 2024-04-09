@@ -1,0 +1,8 @@
+---
+# defaults file for static-ip
+static_ip: false # set to true in the inventory to enable static ip configuration
+static_ip_network: "192.168.0.0"
+node_static_subnet: "23"
+node_static_gateway: "192.168.1.1"
+node_static_dns1: "192.168.1.2"
+node_static_dns2: "192.18.1.3"

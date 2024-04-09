@@ -1,0 +1,125 @@
+{
+    "payload": {
+        "event": "updated",
+        "timestamp": "2024-04-02T18:39:18.782341+00:00",
+        "model": "virtualmachine",
+        "username": "louis.declerck",
+        "request_id": "f1fc7e8f-1381-478e-b6e6-fb7e4a8ea730",
+        "data": {
+            "id": 10,
+            "url": "/api/virtualization/virtual-machines/10/",
+            "display": "test_webhook",
+            "name": "test_webhook",
+            "status": {
+                "value": "active",
+                "label": "Active"
+            },
+            "site": {
+                "id": 1,
+                "url": "/api/dcim/sites/1/",
+                "display": "DotoceanHQ",
+                "name": "DotoceanHQ",
+                "slug": "dotoceanhq"
+            },
+            "cluster": {
+                "id": 1,
+                "url": "/api/virtualization/clusters/1/",
+                "display": "ProxMox_staging",
+                "name": "ProxMox_staging"
+            },
+            "device": null,
+            "role": null,
+            "tenant": null,
+            "platform": null,
+            "primary_ip": null,
+            "primary_ip4": null,
+            "primary_ip6": null,
+            "vcpus": 1,
+            "memory": 2,
+            "disk": 3,
+            "description": "",
+            "comments": "",
+            "config_template": null,
+            "local_context_data": {
+                "message": "THIS IS THE CONFIG CONTEXT"
+            },
+            "tags": [],
+            "custom_fields": {},
+            "created": "2024-04-02T18:36:45.591169Z",
+            "last_updated": "2024-04-02T18:39:18.662722Z",
+            "interface_count": 0,
+            "virtual_disk_count": 0
+        },
+        "snapshots": {
+            "prechange": {
+                "created": "2024-04-02T18:36:45.591Z",
+                "description": "",
+                "comments": "",
+                "local_context_data": {
+                    "message": "EDIT THIS VM TO TRIGGER THE RULEBOOK IN EDA"
+                },
+                "config_template": null,
+                "site": 1,
+                "cluster": 1,
+                "device": null,
+                "tenant": null,
+                "platform": null,
+                "name": "test_webhook",
+                "status": "active",
+                "role": null,
+                "primary_ip4": null,
+                "primary_ip6": null,
+                "vcpus": null,
+                "memory": null,
+                "disk": null,
+                "interface_count": 0,
+                "virtual_disk_count": 0,
+                "custom_fields": {},
+                "tags": []
+            },
+            "postchange": {
+                "created": "2024-04-02T18:36:45.591Z",
+                "last_updated": "2024-04-02T18:39:18.662Z",
+                "description": "",
+                "comments": "",
+                "local_context_data": {
+                    "message": "THIS IS THE CONFIG CONTEXT"
+                },
+                "config_template": null,
+                "site": 1,
+                "cluster": 1,
+                "device": null,
+                "tenant": null,
+                "platform": null,
+                "name": "test_webhook",
+                "status": "active",
+                "role": null,
+                "primary_ip4": null,
+                "primary_ip6": null,
+                "vcpus": "1",
+                "memory": 2,
+                "disk": 3,
+                "interface_count": 0,
+                "virtual_disk_count": 0,
+                "custom_fields": {},
+                "tags": []
+            }
+        }
+    },
+    "meta": {
+        "endpoint": "",
+        "headers": {
+            "Host": "192.168.0.124:5000",
+            "Accept-Encoding": "identity",
+            "User-Agent": "python-urllib3/2.2.1",
+            "Content-Type": "application/json",
+            "Content-Length": "2076"
+        },
+        "source": {
+            "name": "ansible.eda.webhook",
+            "type": "ansible.eda.webhook"
+        },
+        "received_at": "2024-04-02T18:39:18.908995Z",
+        "uuid": "b8f763d6-a544-48b0-89d9-37265bb7d7fa"
+    }
+}

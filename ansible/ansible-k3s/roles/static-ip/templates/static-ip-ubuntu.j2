@@ -1,0 +1,16 @@
+# This configuration file was created by ansible.
+# Static network configuration using netplan
+# For more information, see netplan(5).
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    ens18:
+      addresses:
+        - {{ inventory_hostname }}/{{ node_static_subnet }}
+      nameservers:
+        search: [dotocean, WORKGROUP] # search domain, these can be edited
+        addresses: [{{ node_static_dns1 }}, {{ node_static_dns2 }}]
+      routes:
+        - to: default
+          via: {{ node_static_gateway }}

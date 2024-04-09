@@ -1,0 +1,3 @@
+vault_nextcloud_user: "user"
+vault_nextcloud_password: "pass"
+vault_nextcloud_url: "https://nextcloud_url.io/remote.php/webdav/"

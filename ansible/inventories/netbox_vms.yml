@@ -1,0 +1,11 @@
+plugin: netbox.netbox.nb_inventory
+api_endpoint: https://192.168.1.100
+validate_certs: false
+config_context: false
+compose:
+  ansible_host: primary_ipv4.address.split('/')[0] # There must be a better way to do this
+group_by:
+  - cluster
+query_filters:
+  - has_primary_ip: "true"
+token: "{{ lookup('pipe', 'ansible-vault view ~/api-tokens/vault.yml --vault-pass-file=~/.vault | grep netbox_token') | split(':') | last | trim(' \"') }}"

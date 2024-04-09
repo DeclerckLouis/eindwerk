@@ -1,0 +1,57 @@
+{
+    "data": {
+        "cluster": {
+            "display": "k8s_staging",
+            "id": 2,
+            "name": "k8s_staging",
+            "url": "/api/virtualization/clusters/2/"
+        },
+        "comments": "",
+        "config_template": null,
+        "created": "2024-04-02T18:36:45.591169Z",
+        "custom_fields": {},
+        "description": "",
+        "device": null,
+        "disk": 34,
+        "display": "test_webhook",
+        "id": 10,
+        "interface_count": 0,
+        "last_updated": "2024-04-03T08:10:18.334682Z",
+        "local_context_data": {
+            "message": "THIS IS THE CONFIG CONTEXT",
+            "message2": "The cluster is proxmox"
+        },
+        "memory": 2,
+        "name": "test_webhook",
+        "platform": null,
+        "primary_ip": null,
+        "primary_ip4": null,
+        "primary_ip6": null,
+        "role": null,
+        "site": {
+            "display": "DotoceanHQ",
+            "id": 1,
+            "name": "DotoceanHQ",
+            "slug": "dotoceanhq",
+            "url": "/api/dcim/sites/1/"
+        },
+        "status": {
+            "label": "Active",
+            "value": "active"
+        },
+        "tags": [
+            {
+                "color": "e91e63",
+                "display": "HPE",
+                "id": 6,
+                "name": "HPE",
+                "slug": "hpe",
+                "url": "/api/extras/tags/6/"
+            }
+        ],
+        "tenant": null,
+        "url": "/api/virtualization/virtual-machines/10/",
+        "vcpus": 1,
+        "virtual_disk_count": 0
+    }
+}

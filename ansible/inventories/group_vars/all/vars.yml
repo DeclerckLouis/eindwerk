@@ -1,0 +1,4 @@
+ansible_user: "{{ vault_ansible_user }}"
+ansible_private_key_file: "{{ vault_private_key_file }}"
+ansible_port: 22
+ansible_ssh_common_args: "-o StrictHostKeyChecking=no"

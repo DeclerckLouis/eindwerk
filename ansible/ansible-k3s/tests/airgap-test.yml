@@ -1,0 +1,19 @@
+- name: Airgap Test
+  hosts: all
+  become: true
+  tasks:
+    - name: Download k3s install script
+      delegate_to: localhost
+      ansible.builtin.get_url:
+        url: https://get.k3s.io/
+        timeout: 120
+        dest: "{{ airgap_dir }}/k3s-install.sh"
+        mode: 0755
+
+    - name: Distribute K3s install script
+      ansible.builtin.copy:
+        src: "{{ airgap_dir }}/k3s-install.sh"
+        dest: /usr/local/bin/k3s-install.sh
+        owner: root
+        group: root
+        mode: 0755

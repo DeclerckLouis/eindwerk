@@ -1,0 +1,15 @@
+*__pycache__
+*.auto.tfvars*
+*.tfvars*
+*.terraform*
+*.auto.pkrvars*
+*.pkrvars.hcl
+*.pkrvars
+*secrets*
+*vault.yml
+vault.yaml
+*results*
+*.crt
+*.key
+*inventory.yml
+

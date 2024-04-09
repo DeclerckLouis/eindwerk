@@ -1,0 +1,45 @@
+version: "3.5"
+
+volumes:
+ config:
+ 
+services:
+  dind:
+    hostname: "dind"
+    image: docker:20-dind
+    restart: always
+    expose:
+      - 2375
+    privileged: true
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+      
+  runner:
+    restart: always
+    image: registry.gitlab.com/gitlab-org/gitlab-runner:alpine
+    depends_on:
+      - dind
+    environment:
+      - DOCKER_HOST=tcp://dind:2375
+    volumes:
+      - config:/etc/gitlab-runner
+  
+  register-runner:
+    restart: 'no'
+    image: registry.gitlab.com/gitlab-org/gitlab-runner:alpine
+    depends_on:
+      - dind
+    environment:
+      - CI_SERVER_URL=https://gitlab.com
+      - REGISTRATION_TOKEN=glrt-zaJ7zN-dC67JcYc4Dx2C # change this to the token created in the gitlab project
+    entrypoint: ["echo", "Service foo disabled"] # enable this after first run
+    command:
+      - register
+      - --non-interactive
+      - --locked=false
+      - --name=semaphore-runner
+      - --executor=docker
+      - --docker-image=docker:20-dind
+      - --docker-volumes=/var/run/docker.sock:/var/run/docker.sock
+    volumes:
+      - config:/etc/gitlab-runner

@@ -1,0 +1,3 @@
+ansible_become_password: "{{ vault_become_pass }}"
+k3s_token: "{{ vault_k3s_token }}"  # Use ansible vault if you want to keep it secret, this is the shared secret that the nodes use to form a cluster
+ansible_ssh_common_args: "-o StrictHostKeyChecking=no"

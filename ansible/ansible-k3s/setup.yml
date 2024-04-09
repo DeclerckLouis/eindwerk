@@ -1,0 +1,75 @@
+---
+- name: Cluster prep
+  hosts: k3s_cluster
+  gather_facts: true
+  become: true
+  roles:
+    - role: prereq
+    - role: raspberrypi
+    - role: static-ip
+
+- name: Setup K3S server
+  hosts: server
+  become: true
+  roles:
+    - role: k3s-server
+
+- name: Setup K3S agent
+  hosts: agent
+  become: true
+  roles:
+    - role: k3s-agent
+
+- name: Locate kubeconfig file and fetch it to local
+  hosts: server[0]
+  gather_facts: true
+  become: true
+  tasks:
+# For those wondering why the following task is required (instead of setting the name with current_datetime in the inventory):
+# Every time the variable in the inventory would be called, current_datetime would be re-evaluated, and the name would change.
+# So, to prevent this, we set the name in this task as a fact, and call the fact from this host whenever it's needed (in the next task).
+    - name: Set datetime fact (and delegate it to ansible controller for later use)
+      ansible.builtin.set_fact:
+        current_datetime: "{{ ansible_date_time.iso8601_basic }}"
+
+    - name: Set kubeconfig file name
+      ansible.builtin.set_fact:
+        kubefile: "k3s_{{ current_datetime }}.yaml"
+
+    - name: Copy kubeconfig file to local /tmp
+      ansible.builtin.fetch:
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: "~/kubeconfigs/{{ kubefile }}"
+        flat: true
+
+- name: Kubeconfig processing
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: Change server ip in kubeconfig
+      ansible.builtin.replace:
+        path: "~/kubeconfigs/{{ hostvars[groups['server'][0]]['kubefile'] }}"
+        regexp: 'server: https://.*:6443'
+        replace: "server: https://{{ hostvars[groups['server'][0]]['inventory_hostname'] }}:6443"
+
+    - name: Upload kubeconfig to nextcloud
+      ansible.builtin.uri:
+        url: "{{ nextcloud_url }}/{{ hostvars[groups['server'][0]]['kubefile'] }}"
+        user: "{{ nextcloud_user }}"
+        password: "{{ nextcloud_password }}"
+        method: PUT
+        body_format: raw
+        src: "~/kubeconfigs/{{ hostvars[groups['server'][0]]['kubefile'] }}"
+        status_code: 201
+        validate_certs: true
+        force_basic_auth: true # required, otherwise the nextcloud server will return 401!
+      changed_when: false
+
+    - name: Cleanup kubeconfig file locally
+      ansible.builtin.file:
+        path: "~/kubeconfigs/{{ hostvars[groups['server'][0]]['kubefile'] }}"
+        state: absent
+
+    - name: Display the kubeconfig file name
+      ansible.builtin.debug:
+        msg: "Kubeconfig can be found in the nextcloud drive at: {{ nextcloud_url }}/{{ hostvars[groups['server'][0]]['kubefile'] }}"

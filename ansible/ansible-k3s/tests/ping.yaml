@@ -1,0 +1,29 @@
+---
+- name: Test
+  hosts: all
+  remote_user: ansible
+  tasks:
+    - name: set ssh arguments
+      set_fact:
+          ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+    
+    - name: Get timezone.
+      ansible.builtin.command:
+        cmd: "/usr/bin/timedatectl"
+      register: timedatectl
+
+    - name: Show current user
+      ansible.builtin.command:
+        cmd: "whoami"
+      register: whoami
+      become: yes
+
+    - name: Show current user
+      ansible.builtin.debug:
+        msg: "{{ whoami.stdout }}"
+      become: yes
+
+    - name: Show timezone.
+      ansible.builtin.debug:
+        msg: "{{ timedatectl.stdout }}"
+      become: yes

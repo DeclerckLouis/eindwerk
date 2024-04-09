@@ -1,0 +1,6 @@
+---
+# handlers file for static-ip
+- name: Apply static IP configuration
+  ansible.builtin.shell:
+    cmd: netplan generate && netplan apply
+  changed_when: false

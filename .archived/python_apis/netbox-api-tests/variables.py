@@ -1,0 +1,1 @@
+netbox_url = None # URL of Proxmox server

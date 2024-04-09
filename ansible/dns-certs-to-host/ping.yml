@@ -1,0 +1,20 @@
+---
+- name: A playbook to test the connection to the hosts
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Test connection
+      ansible.builtin.ping:
+
+    - name: Debug ansible user
+      ansible.builtin.debug:
+        var: ansible_user
+
+    - name: Whoami and store result for debug
+      ansible.builtin.command: whoami
+      register: whoami
+      changed_when: false
+
+    - name: Debug whoami
+      ansible.builtin.debug:
+        var: whoami.stdout

@@ -1,0 +1,54 @@
+#cloud-config
+autoinstall:
+  version: 1
+  locale: en_US
+  keyboard:
+    layout: be
+  ssh:
+    install-server: true
+    allow-pw: true
+    disable_root: true
+    ssh_quiet_keygen: true
+    allow_public_ssh_keys: true
+  packages:
+    - qemu-guest-agent
+    - sudo
+  storage:
+    layout:
+      name: direct
+    swap:
+      size: 0
+  user-data:
+    package_upgrade: true
+    timezone: Europe/Brussels
+    users:
+      - name: "louis_declerck"
+        groups: [adm, sudo, docker]
+        lock-passwd: false
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        shell: /bin/bash
+        passwd: "$6$V58ttSKGLYVsVHpE$X9REVrcE3xQzgJUf9Q.NGg4uSa4KVrvqVA1wRkrMRUA4RKfTTd1bWJIGrpRTAkYMh1JX8/apjlZA54yD.AFHY."
+        ssh_import_id:
+          - gh:declercklouis
+        ssh_authorized_keys:
+          - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC6b00ZKWA4aL+ezITf5QfouiXRlVr3atJ8ZyRcjPWrJ8Eb9D7XksMpyb8w4illd7E/q+RwyaHxaW+ApRHGz05dkqVwIBFNOSoVFKe9M4LbUR60gKQ4ZuEOabz9IWM1Y1igFlgOUKH445CG6yz988TgfZEhyIm0J0G5FrfmgV7BpjzvypqHtEeiLcNdIGRLLAFf2MGVBorF7Yeh92xIdhVWzN0eVIydZKjFHG0VyrBUZnaXt+HRPJ51jMaxl2QRynAvR8G2+AB/lQmtm1vOOR+V0iaA6U4ZoN29GrCA8W/qwiCBlILkFDfmH/HjIdyK0nA+8TTVTg8HjE0rTgKyQ6K0xAJQk4roFGv8oTBoDu0qiaHO8Nm6g966f7v6oe1GFkd/YPWKsXmrH7fwZdEULYIvJsoEnXwau4tqra2S2iSM1vF3Be5ol4fZTjlUyD/XobE/+mc157Vi2bOFZcom1bC6eGlLAXCB3/Q83YsMzertNcxtQbSt1vkHkxhH7F6rMGRh3m7/yrg11Hp1b5RkOlizDp1qpyAD0skibIKy4+Et4EjCAkoRYwo0Ko5d54QpDvJKiYAoD5zGDjQCq60X3wL6h7+MvF0JLbM1o0RuHjQiGWko54AFcS5fnDFIo/YSCJC3C3wb9CoQTWhGlLaYLyRJRgMgKPAkcOxz1dlnvNvMmw== automation-controller
+          - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDnm9aqq6Geo97HglDN4Vb4Zkn4Lf7lLamO+dxP4ep3QMVjnbgSYxpJv42wI2fisRrvzHk9VInUih2SoTIBd3c16DqfyPbaOuyqfwY6Xsg1fpjVvxEk2t3hufo3+UgKDOGhqCcFY035V6SqWxkTPdeqs/5ck/HIVqB8l4SNOmnuugx3LrOv8J+m0CE1CFZ67KH5+FS1II7PzOtC3snp54TxjdqZSqT8DalLhQU4pnpBOUb6NTga6HoglX93VzxWG3R2P4WPpFpi6lbjXpfisICm7pv0qODVmffWkiV3w5RCB0lQxocypi17b1Lq418LsmbZcYMYxWZSx9wlBT5uXTeQV8/i/e6T0IviRX7iHN4z2Pz3tkQZmItm8+cn1Ki0Fz8XS8UAGIO+1le6fbV+nKtreWqG+rjb/oImpQ0ma6A/8cUnU08nSdeygpKEX0onVmik20XwQXCSMZ/qvFfgt0dbuxfsH0K4aXeiB0+FuVGO7CYbYZUYfSkkiBSqjzClszU= decle@LaptopLowie
+
+      - name: "tom_galloo"
+        groups: [adm, sudo, docker]
+        lock-passwd: false
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        shell: /bin/bash
+        passwd: "$6$DH63vP3GPhUAMocz$C.K0QDQ0jjFeHqJMRZyUfi5.P6EjbO1ie8RJANHCPC2UeLnNKue0YqIzGhuNWvTw7ab1hqsHGNwUKq4BMC/460"
+        ssh_authorized_keys:
+          - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCKPQpkqIN3yUUJg/DgdUv2WrVJ0r9liP988JlgpkjwSWTKLzahfGwS4zcf/52LPCU3BatJcczlV7TNUTECDX76FSJp/AyKzW/kvOkwqQBEto5iqAb857YtnZ/QjybL3/9A+Ij0ivTy49R6FL5okFr+Om8PbY0KdwBaFiIpbT1uFyCPDW2qh2nNnM8wnntlj9w6GE4hIRF+y3OU4cF2j+XDJrlpGYMkCQHaZMmUWe6O4NqyHY9zHn2m3ppnjK3J5cVv5vLAquXd9ZUi0P8pD2d7384OHu5BHGb+SkGHsa70ywbKQogOYWF3jA/vH9FnFhXHU2hokUIEjLj8r1GzLsQX dotOcean - Tom G
+
+      - name: "ansible"
+        groups: [adm, sudo, docker]
+        lock-passwd: false
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        shell: /bin/bash
+        passwd: "$6$DH63vP3GPhUAMocz$C.K0QDQ0jjFeHqJMRZyUfi5.P6EjbO1ie8RJANHCPC2UeLnNKue0YqIzGhuNWvTw7ab1hqsHGNwUKq4BMC/460"
+        ssh_authorized_keys:
+          - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC6b00ZKWA4aL+ezITf5QfouiXRlVr3atJ8ZyRcjPWrJ8Eb9D7XksMpyb8w4illd7E/q+RwyaHxaW+ApRHGz05dkqVwIBFNOSoVFKe9M4LbUR60gKQ4ZuEOabz9IWM1Y1igFlgOUKH445CG6yz988TgfZEhyIm0J0G5FrfmgV7BpjzvypqHtEeiLcNdIGRLLAFf2MGVBorF7Yeh92xIdhVWzN0eVIydZKjFHG0VyrBUZnaXt+HRPJ51jMaxl2QRynAvR8G2+AB/lQmtm1vOOR+V0iaA6U4ZoN29GrCA8W/qwiCBlILkFDfmH/HjIdyK0nA+8TTVTg8HjE0rTgKyQ6K0xAJQk4roFGv8oTBoDu0qiaHO8Nm6g966f7v6oe1GFkd/YPWKsXmrH7fwZdEULYIvJsoEnXwau4tqra2S2iSM1vF3Be5ol4fZTjlUyD/XobE/+mc157Vi2bOFZcom1bC6eGlLAXCB3/Q83YsMzertNcxtQbSt1vkHkxhH7F6rMGRh3m7/yrg11Hp1b5RkOlizDp1qpyAD0skibIKy4+Et4EjCAkoRYwo0Ko5d54QpDvJKiYAoD5zGDjQCq60X3wL6h7+MvF0JLbM1o0RuHjQiGWko54AFcS5fnDFIo/YSCJC3C3wb9CoQTWhGlLaYLyRJRgMgKPAkcOxz1dlnvNvMmw== automation-controller
+          - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDnm9aqq6Geo97HglDN4Vb4Zkn4Lf7lLamO+dxP4ep3QMVjnbgSYxpJv42wI2fisRrvzHk9VInUih2SoTIBd3c16DqfyPbaOuyqfwY6Xsg1fpjVvxEk2t3hufo3+UgKDOGhqCcFY035V6SqWxkTPdeqs/5ck/HIVqB8l4SNOmnuugx3LrOv8J+m0CE1CFZ67KH5+FS1II7PzOtC3snp54TxjdqZSqT8DalLhQU4pnpBOUb6NTga6HoglX93VzxWG3R2P4WPpFpi6lbjXpfisICm7pv0qODVmffWkiV3w5RCB0lQxocypi17b1Lq418LsmbZcYMYxWZSx9wlBT5uXTeQV8/i/e6T0IviRX7iHN4z2Pz3tkQZmItm8+cn1Ki0Fz8XS8UAGIO+1le6fbV+nKtreWqG+rjb/oImpQ0ma6A/8cUnU08nSdeygpKEX0onVmik20XwQXCSMZ/qvFfgt0dbuxfsH0K4aXeiB0+FuVGO7CYbYZUYfSkkiBSqjzClszU= decle@LaptopLowie

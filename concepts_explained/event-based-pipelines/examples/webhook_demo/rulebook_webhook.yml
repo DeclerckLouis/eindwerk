@@ -1,0 +1,38 @@
+---
+- name: Listen for events on a webhook
+  hosts: all
+  ## Define our source for events
+  sources:
+    - ansible.eda.webhook: # Please refer to https://github.com/ansible/event-driven-ansible/blob/main/extensions/eda/plugins/event_source/webhook.py
+        host: 0.0.0.0
+        port: 5000
+        # SSL is possible, check the source code
+        certfile: ../.certgenerator/dotOcean-test.crt
+        keyfile: ../.certgenerator/dotOcean-test.key
+        # password: "Test123"
+  ## Define the conditions we are looking for
+  rules:
+    - name: Say Hello
+      condition:
+        all:
+          - event.payload.message == "Ansible is super cool"
+  ## Define the action we should take should the condition be met
+      action:
+        run_playbook:
+          name: say-what.yml
+
+# Start this rulebook
+# ansible-rulebook -r webhook.yml -i inventory.yml -vv
+
+# To trigger (WITHOUT SSL):
+# curl -H 'Content-Type: application/json' -d "{\"message\": \"Ansible is super cool\"}" 192.168.0.124:5000
+
+# To trigger (WITH SSL):
+# curl -k --cert /opt/netbox/certs/dotOcean-test.crt --key /opt/netbox/certs/dotOcean-test.key -H 'Content-Type: application/json' \
+# -d "{\"message\": \"Ansible is super cool\"}" https://192.168.0.124:5000
+
+# To not trigger
+# curl -H 'Content-Type: application/json' -d "{\"message\": \"Ansible is super lame\"}" 127.0.0.1:5000
+
+# Known issues (netbox)
+# https://github.com/netbox-community/netbox/issues/15387

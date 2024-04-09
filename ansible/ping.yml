@@ -1,0 +1,8 @@
+---
+- name: Test
+  hosts: cluster_ProxMox_staging
+  gather_facts: false
+  remote_user: ansible
+  tasks:
+    - name: Ping!
+      ansible.builtin.ping:

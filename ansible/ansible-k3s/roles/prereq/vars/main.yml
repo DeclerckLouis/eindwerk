@@ -1,0 +1,4 @@
+---
+# vars file for prereq
+prereq_cluster_cidr: "{{ (server_config_yaml | from_yaml)['cluster-cidr'] | default('10.42.0.0/16') }}"
+prereq_service_cidr: "{{ (server_config_yaml | from_yaml)['service-cidr'] | default('10.43.0.0/16') }}"

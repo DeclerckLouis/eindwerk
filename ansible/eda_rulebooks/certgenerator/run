@@ -1,0 +1,17 @@
+#!bash
+
+# CANAME=dotOcean-test
+# PASSWORD=Test123
+
+# # generate aes encrypted private key
+# openssl genrsa -aes256 -out $CANAME.key -passout pass:$PASSWORD 4096
+# # create certificate, 1826 days = 5 years
+# # ... or you provide common name, country etc. via:
+# openssl req -x509 -new -nodes -key $CANAME.key -sha256 -days 1826 -out $CANAME.crt -subj '/CN=dotOcean Root CA/C=BE/ST=Bruges/L=bruges/O=dotOcean' -passin pass:$PASSWORD
+
+CANAME=dotOcean-test
+
+# generate private key
+openssl genrsa -out $CANAME.key 4096
+# create certificate, 1826 days = 5 years
+openssl req -x509 -new -nodes -key $CANAME.key -sha256 -days 1826 -out $CANAME.crt -subj '/CN=dotOcean Root CA/C=BE/ST=Bruges/L=bruges/O=dotOcean'

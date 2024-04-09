@@ -1,0 +1,40 @@
+---
+# tasks file for static-ip
+# - name: Debug OS distro
+#   ansible.builtin.debug:
+#     msg: "OS family is {{ ansible_distribution }}"
+
+- name: Template static IP configuration [UBUNTU]
+  when: ansible_distribution == "Ubuntu" and static_ip == "true"
+  block:
+    - name: Install netplan.io if not present
+      ansible.builtin.package:
+        name: netplan.io
+        state: present
+        update_cache: true
+
+    - name: Remove default configuration
+      ansible.builtin.file:
+        path: /etc/netplan/00-installer*
+        state: absent
+
+    - name: Template static IP configuration
+      ansible.builtin.template:
+        src: static-ip-ubuntu.j2
+        dest: /etc/netplan/01-static-ip.yaml
+        mode: "0600"
+
+- name: Template static IP configuration [DEBIAN]
+  when: ansible_distribution == "Debian" and static_ip == "true"
+  block:
+    - name: Remove default configuration
+      ansible.builtin.file:
+        path: /etc/network/interfaces.d/01-netcfg
+        state: absent
+
+    - name: Template static IP configuration
+      ansible.builtin.template:
+        src: static-ip-debian.j2
+        dest: /etc/network/interfaces.d/01-netcfg
+        mode: "0600"
+      notify: Apply static IP configuration

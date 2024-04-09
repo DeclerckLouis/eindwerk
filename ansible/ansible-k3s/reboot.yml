@@ -1,0 +1,19 @@
+---
+- name: Reboot cluster servers staggered (Will take a lot of time)
+  hosts: server
+  become: true
+  gather_facts: true
+  serial: 1 # Reboot one server(node) at a time
+  tasks:
+    - name: Reboot (This takes a long time)
+      ansible.builtin.reboot:
+        test_command: kubectl get nodes
+
+- name: Reboot cluster agents staggered
+  hosts: agent
+  become: true
+  gather_facts: true
+  serial: 1
+  tasks:
+    - name: Reboot
+      ansible.builtin.reboot:

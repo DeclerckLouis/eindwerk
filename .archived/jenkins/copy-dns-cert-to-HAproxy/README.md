@@ -1,0 +1,1 @@
+This pipeline runs a playbook that copies the DNS certificate to HAPROXY in DMZ, this to ensure that the DNS certificate doesn't expire or is changed in the proxy when needed
