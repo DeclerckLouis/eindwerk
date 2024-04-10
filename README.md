@@ -77,6 +77,7 @@ graph TD
 - openjdk           (tested with openjdk-17-jdk)
 - ansible-rulebook  (tested with ansible-rulebook 0.1.0)
 - ansible-runner    (tested with ansible-runner 2.0.0)
+- ansible-lint      (tested with ansible-lint 24.2.1)
 - ansible.eda       (tested with ansible.eda 0.1.0) -> ```ansible-galaxy collection install ansible.eda```
 
 
