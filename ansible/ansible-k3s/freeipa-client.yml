@@ -1,0 +1,37 @@
+---
+- name: Setup freeipa client
+  hosts: k3s_cluster
+  become: true
+  tasks:
+    - name: Install freeipa-client packages
+      ansible.builtin.package:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - freeipa-client
+        - oddjob-mkhomedir
+
+    - name: Add freeipa Server to hosts
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "10.10.31.8 ipa.dotocean.io freeipa"
+        state: present
+
+    - name: Configure freeipa client
+      ansible.builtin.command:
+        cmd: ipa-client-install --mkhomedir --force-join --server=ipa.dotocean.io --domain=dotocean.io --realm=DOTOCEAN.IO --principal=admin --password="{{ ipa_admin_pass }}" --unattended
+      changed_when: false
+
+    - name: Ensure pam_mkhomedir configuration is present
+      ansible.builtin.blockinfile:
+        path: /usr/share/pam-configs/mkhomedir
+        block: |
+          Name: mkhomedir
+          Default: yes
+          Priority: 0
+          Session-Type: Additional
+          Session:
+            required pam_mkhomedir.so umask=0022 skel=/etc/skel
+        create: true
+        mode: '0644'
+      become: true

@@ -1,6 +1,7 @@
 *__pycache__
 *.auto.tfvars*
 *.tfvars*
+*/terraform.tfstate
 *.terraform*
 *.auto.pkrvars*
 *.pkrvars.hcl
@@ -12,4 +13,3 @@ vault.yaml
 *.crt
 *.key
 *inventory.yml
-

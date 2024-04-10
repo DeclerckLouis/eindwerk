@@ -1,3 +1,4 @@
 nextcloud_user: "{{ vault_nextcloud_user }}"
 nextcloud_password: "{{ vault_nextcloud_password }}"
 nextcloud_url: "{{ vault_nextcloud_url }}"
+ipa_admin_pass: "{{ vault_ipa_admin_pass }}"
