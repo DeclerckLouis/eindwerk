@@ -91,7 +91,7 @@ if we add the current research of event-driven pipelines, we could even add anot
 It's a little extra work, but it would be really nice to have clusters à la carte. (Still, the main use case would be for internal testing and learning)  
 the new workflow would look something like this:  
 ```mermaid
-graph LR
+graph TD
     A[NetBox] --> |Webhook-trigger| B[Event-driven-ansible]
     B --> |Trigger parameters| C[Ansible playbooks]
     C --> |Variables| D[Terraform configuration templates]
