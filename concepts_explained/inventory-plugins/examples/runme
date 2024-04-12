@@ -1,0 +1,3 @@
+#! bash
+# This simple runs the 
+ansible-inventory -i inventory.example.yml --list

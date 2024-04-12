@@ -1,0 +1,13 @@
+plugin: netbox.netbox.nb_inventory
+api_endpoint: netbox.yourorg.com
+validate_certs: true
+config_context: false
+compose:
+  ansible_host: primary_ipv4.address.split('/')[0] # Get the ipv4 address from netbox (ex. 192.168.0.1/24) and split for ip
+group_by:
+  - cluster
+query_filters:
+  - has_primary_ip: "true"
+# A rather extreme way to keep the netbox token secure, in production this should be replaced with a centralized secrets manager (e.g. Hashicorp Vault)
+# For this example, i put the token in a vault.yml file and used ansible-vault view to see the secret, then split the output to get the token
+token: "{{ lookup('pipe', 'ansible-vault view ~/api-tokens/vault.yml --vault-pass-file=~/.vault | grep netbox_token') | split(':') | last | trim(' \"') }}"
