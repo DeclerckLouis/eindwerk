@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+
+from requests import request
+import json, os
+
+client_user = "{{ pm_script_user }}"
+client_url = "{{ pm_script_url }}"
+
+### ProxMoxClient class ###
+def get_resources_info_per_type(url, type):
+    requrl = f"{url}/cluster/resources?type={type}"
+    reqheaders = {{ pm_script_header }}
+    response = request("GET", requrl, headers=reqheaders, verify=False)
+    return response.json()['data']
+
+resource = get_resources_info_per_type(client_url, "node")
+{# print(json.dumps(resource, indent=2)) #}
+# parser.write_results(resource, "vmnode.json")
+nodes = {}
+nodestats = []
+for node in resource:
+    if node["status"]=="offline": # skip offline nodes
+        continue
+    else:
+        maxmem = node["maxmem"] #get the maxmem from the request
+        mem = node["mem"] #get the mem from the request
+        mempercent = round((mem/maxmem)*100, 2) # calculate the percentage of memory used
+        nodes[mempercent] = node["node"] # add the percentage of memory used and the node name to the nodes dictionary (so we can sort it later)
+sorted_nodes = list(sorted(nodes.items(), reverse=False)) # sort the nodes by memory usage
+print(sorted_nodes[0][1])
