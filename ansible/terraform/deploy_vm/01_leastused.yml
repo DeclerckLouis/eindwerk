@@ -1,0 +1,44 @@
+---
+- name: Check least used ProxMox node
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: Copy the template script to localhost
+      ansible.builtin.template:
+        src: "templates/proxmoxer.py.j2"
+        dest: "/tmp/proxmoxer.py"
+        mode: "755"
+      vars:
+        proxmox_script_user: "{{ pm_script_user }}"
+        proxmox_script_password: "{{ pm_script_password }}"
+        proxmox_script_url: "{{ pm_script_url }}"
+
+
+    - name: Ensure the required python packages are installed
+      ansible.builtin.pip:
+        name: "{{ item }}"
+      with_items:
+        - requests
+        - proxmoxer
+
+    - name: Ensure the required apt packages are installed
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: true
+      with_items:
+        - sshpass
+      become: true
+
+    - name: Run script on remote host
+      ansible.builtin.script: /tmp/proxmoxer.py
+      register: result
+
+    - name: Set the output of the script to a variable
+      ansible.builtin.set_fact:
+        script_output: "{{ result.stdout_lines }}"
+
+    - name: Remove script from remote host
+      ansible.builtin.file:
+        path: /tmp/proxmoxer.py
+        state: absent

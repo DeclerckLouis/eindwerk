@@ -1,0 +1,11 @@
+---
+# this is the main playbook, run it to run the whole thing
+
+- name: "Main"
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    # tasks go here
+
+- import_playbook: "./01_leastused.yml"
+- import_playbook: "./02_deploy.yml"

@@ -1,12 +1,13 @@
 # imports
+import json
 import proxmox_client as pc
 import variables as vars # type: ignore
 
 # Set proxmoxclient variables
 client_url = vars.proxmox_url
 client_user = vars.proxmox_user
-client_passwordfile = "proxmox-api-tests/secrets/password"
-parser_results_dir = "proxmox-api-tests/results/"
+client_passwordfile = "eindwerk/.archived/python_apis/proxmox-api-tests/secrets/password"
+parser_results_dir = "./results/"
 
 # utilise the classes
 # Client is used to make the requests to the proxmox api (returns responses in JSON format)
@@ -20,7 +21,8 @@ parser = pc.ProxMoxParser(client, parser_results_dir)
 # This can be used in ansible playbooks to deplay VMs on the node with the most memory available (#TODO add this to the ansible playbook)
 ####################################################################################################################################################
 resource = client.get_resources_info_per_type("node")
-parser.write_results(resource, "vnode.json")
+print(json.dumps(resource, indent=2))
+# parser.write_results(resource, "vmnode.json")
 nodes = {}
 nodestats = []
 for node in resource:

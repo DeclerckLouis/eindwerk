@@ -1,0 +1,2 @@
+hcp_proxmox_token: "{{ vault_hcp_proxmox_token }}"
+hcp_vault_url: "{{ vault_hcp_vault_url }}"

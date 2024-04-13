@@ -7,50 +7,54 @@ class ProxMoxClient:
     def __init__(self, url, username, password_file): # password_file is the path to the file containing the password (like secrets/password)
         self.url = url
         self.username = username
-        with open(password_file, "r") as passwordfile:
-            self.password = passwordfile.read().strip()
-        self.ticket = self.authenticate_proxmox()
+        # with open(password_file, "r") as passwordfile:
+        #     self.password = passwordfile.read().strip()
+        # self.ticket = self.authenticate_proxmox()
 
 # authenticate to proxmox
-    def authenticate_proxmox(self):
-        url = f"{self.url}/access/ticket"
-        data = {
-            "username": self.username,
-            "password": self.password,
-        }
-        response = request("POST", url, data=data, verify=False)
-        if response.status_code != 200:
-            raise PermissionError(
-                f"Request failed with status code {response.status_code}, please check your credentials")
-        else:
-            return response.json()["data"]["ticket"]
+    # def authenticate_proxmox(self):
+    #     url = f"{self.url}/access/ticket"
+    #     data = {
+    #         "username": self.username,
+    #         "password": self.password,
+    #     }
+    #     response = request("POST", url, data=data, verify=False)
+    #     if response.status_code != 200:
+    #         raise PermissionError(
+    #             f"Request failed with status code {response.status_code}, please check your credentials")
+    #     else:
+    #         return response.json()["data"]["ticket"]
 
 # get cluster info
     def get_cluster_info(self):
         url = f"{self.url}/cluster"
-        cookies = {"PVEAuthCookie": self.ticket}
-        response = request("GET", url, cookies=cookies, verify=False)
+        # cookies = {"PVEAuthCookie": self.ticket}
+        headers = {"Authorization": "PVEAPIToken=automation@pve!automation_controller=f8e2da97-3510-477f-bf16-b3a67a22bf3b"}
+        response = request("GET", url, headers=headers, verify=False)
         return response.json()
 
 # get all resources (careful, this is a massive json)
     def get_all_resources_info(self):
         url = f"{self.url}/cluster/resources"
-        cookies = {"PVEAuthCookie": self.ticket}
-        response = request("GET", url, cookies=cookies, verify=False)
+        # cookies = {"PVEAuthCookie": self.ticket}
+        headers = {"Authorization": "PVEAPIToken=automation@pve!automation_controller=f8e2da97-3510-477f-bf16-b3a67a22bf3b"}
+        response = request("GET", url, headers=headers, verify=False)
         return response.json()
 
 # get all resources of a specific type    
     def get_resources_info_per_type(self, type):
         url = f"{self.url}/cluster/resources?type={type}"
-        cookies = {"PVEAuthCookie": self.ticket}
-        response = request("GET", url, cookies=cookies, verify=False)
-        return response.json()['data']
+        # cookies = {"PVEAuthCookie": self.ticket}
+        headers = {"Authorization": "PVEAPIToken=automation@pve!automation_controller=abd47135-24ef-4d6c-8e0e-898a48b0bfda"}
+        response = request("GET", url, headers=headers, verify=False)
+        return response.json()["data"]
     
 # get all resources that are vm type and their correspondng node
     def get_all_vms(self):
         url = f"{self.url}/cluster/resources?type=vm"
-        cookies = {"PVEAuthCookie": self.ticket}
-        response = request("GET", url, cookies=cookies, verify=False)
+        # cookies = {"PVEAuthCookie": self.ticket}
+        headers = {"Authorization": "PVEAPIToken=automation@pve!automation_controller=f8e2da97-3510-477f-bf16-b3a67a22bf3b"}
+        response = request("GET", url, headers=headers, verify=False)
         return response.json()["data"]
     
     def get_corresponding_node(self, vmid):

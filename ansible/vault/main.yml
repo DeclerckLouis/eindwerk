@@ -1,0 +1,11 @@
+---
+
+- name: Hashicorp vault lookup
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Get proxmox secret from vault
+      ansible.builtin.debug:
+        # This call the secret with api path "/v1/proxmox/data/apitoken"
+        msg: "{{ lookup('hashi_vault', 'secret=proxmox/data/apitoken token={{ hcp_proxmox_token }} url={{ hcp_vault_url }} validate_certs=false') }}"
+      register: proxmox_secret

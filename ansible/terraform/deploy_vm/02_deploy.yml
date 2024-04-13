@@ -1,0 +1,8 @@
+---
+- name: Debug script output
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: Debug script output
+      ansible.builtin.debug:
+        var: hostvars['localhost']['script_output']
