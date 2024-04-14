@@ -105,6 +105,10 @@ graph TD
     H --> |Status| J
     I --> |Status| J
     J --> |Alerts| B
+    S[HCL Vault] --> |Secrets| C
+    S --> |Secrets| D
+    S --> |Secrets| E
+    S --> |Secrets| F
 ```
 
 ## More information
