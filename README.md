@@ -88,7 +88,8 @@ It would be nice to be able to "declare" a new cluster in proxmox, with the amou
 and then have the stack deploy the cluster, and then deploy kubernetes on top of that.  
 if we add the current research of event-driven pipelines, we could even add another layer of self-healing (or self-scaling) to the stack.  
 > This would mean that we have double-healing; kubernetes (inherently self-healing) and the cluster nodes (self-healing through the event-driven pipelines).
-It's a little extra work, but it would be really nice to have clusters à la carte. (Still, the main use case would be for internal testing and learning)  
+It's a little extra work, but it would be really nice to have clusters à la carte. (Still, the main use case would be for internal testing and learning)
+> Another nice thing that i'm currently working on is centralized secrets management, allowing every component to access only the secrets it needs.  
 the new workflow would look something like this:  
 ```mermaid
 graph TD
