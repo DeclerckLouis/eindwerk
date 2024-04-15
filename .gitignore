@@ -3,6 +3,8 @@
 *.tfvars*
 */terraform.tfstate
 *.terraform*
+*.tfstate
+*/http*
 *.auto.pkrvars*
 *.pkrvars.hcl
 *.pkrvars
