@@ -1,0 +1,4 @@
+flask
+hashlib
+hmac
+gunicorn
