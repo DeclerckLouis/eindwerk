@@ -10,3 +10,15 @@
     - name: Debug all variables
       ansible.builtin.debug:
         var: ansible_eda.event
+
+    - name: Create a file with a random name in /tmp
+      ansible.builtin.file:
+        path: "~/eindwerk/01_MAIN/rulebooks/misc/{{  ansible_eda.event.payload.request_id  }}.txt"
+        state: touch
+
+    - name: Wait 10 seconds
+      ansible.builtin.wait_for:
+        timeout: 30
+        state: started
+        delay: 1
+        msg: "Waited 30 seconds"

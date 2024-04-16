@@ -12,17 +12,13 @@
   ## Define the conditions we are looking for
   rules:
     - name: Say Hello from proxmoxcluster
-      condition:
-        all:
-          - event.payload.data.cluster.name == "ProxMox_staging"
+      condition: event.payload.data.cluster.name == "ProxMox_staging"
       action:
         run_playbook:
           name: playbook_echo.yml
 
     - name: Say Hello
-      condition:
-        all:
-          - event.payload.data.cluster.name == "k8s_staging"
+      condition: event.payload.data.cluster.name == "k8s_staging"
       action:
         run_playbook:
           name: playbook_echo2.yml
