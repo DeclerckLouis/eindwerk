@@ -1,6 +1,6 @@
 # Packer Proxmox
 ## why doesn't it work?
-So, this is still under very heavy development.
+This is still under very heavy development.
 The idea is to create a packer template that can be used to create a base image for the virtual machines in ProxMox.
 Later on, i'll probably add some more features to this, such as:
 - presinstalled freeIPA client
