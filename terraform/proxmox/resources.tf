@@ -22,6 +22,7 @@ resource "proxmox_virtual_environment_vm" "little-cluster" {
   cpu {                                                       # TODO: This gets ignored, why?
     cores = 2
     sockets = 2
+    type = "x86-64-v2-AES"
   }
 
   memory {                                                    # TODO: This also gets ignored, why?
