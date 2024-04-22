@@ -1,0 +1,62 @@
+---
+- name: Install and configure zabbix agent
+  hosts: proxmoxes
+  become: true
+  gather_facts: true
+  handlers:
+    - name: Restart zabbix-agent
+      ansible.builtin.systemd:
+        name: zabbix-agent2
+        state: restarted
+        enabled: true
+  tasks:
+    - name: Install Zabbix repository on Ubuntu
+      ansible.builtin.apt:
+        deb: https://repo.zabbix.com/zabbix/6.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.0-4+ubuntu22.04_all.deb
+        state: present
+      when:
+        - ansible_distribution == 'Ubuntu'
+      failed_when: false
+
+    - name: Install Zabbix repository on Debian
+      ansible.builtin.apt:
+        deb: https://repo.zabbix.com/zabbix/6.0/debian/pool/main/z/zabbix-release/zabbix-release_6.0-4+debian11_all.deb
+        state: present
+      when:
+        - ansible_distribution == 'Debian'
+      failed_when: false
+
+    - name: Stop zabbix-agent
+      ansible.builtin.systemd:
+        name: zabbix-agent
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: Remove zabbix-agentd
+      ansible.builtin.apt:
+        name: zabbix-agent
+        state: absent
+
+    - name: Install zabbix-agent2
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: true
+      with_items:
+        - zabbix-agent2
+        - zabbix-agent2-plugin-*
+
+    - name: Delete agentd config if present
+      ansible.builtin.file:
+        path: /etc/zabbix/zabbix_agentd.conf
+        state: absent
+
+    - name: Copy zabbix agent configuration
+      ansible.builtin.template:
+        src: zabbix_agent2.conf.j2
+        dest: /etc/zabbix/zabbix_agent2.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart zabbix-agent

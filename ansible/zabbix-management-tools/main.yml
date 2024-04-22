@@ -1,0 +1,6 @@
+---
+- name: Agent setup
+  import_playbook: agent-setup.yml
+
+- name: Add agent to server
+  import_playbook: add-to-server.yml
