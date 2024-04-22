@@ -88,7 +88,7 @@ source "proxmox-iso" "ubuntu-server" {
   http_port_min     = 8802
   http_port_max     = 8802
 
-  ssh_username = "louis_declerck"
+  ssh_username = "ansible"
   # ssh_password = "no"
   ssh_private_key_file = "~/.ssh/id_rsa"
   ssh_timeout = "60m" # Raise the timeout when installation takes longer
@@ -139,12 +139,30 @@ build {
 
   provisioner "shell" {
     inline = [
-      "wget https://repo.zabbix.com/zabbix/6.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.4-1+ubuntu22.04_all.deb",
+      "wget https://repo.zabbix.com/zabbix/6.5/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.5-1+ubuntu22.04_all.deb",
       "sudo dpkg -i zabbix-release_6.4-1+ubuntu22.04_all.deb",
       "sudo apt-get update -y",
       "sudo apt-get install -y zabbix-agent2 zabbix-agent2-plugin-*",
       "sudo systemctl enable zabbix-agent2",
-      "sudo systemctl start zabbix-agent2"
+      "sudo systemctl start zabbix-agent2",
+      "sudo rm zabbix-release_6.4-1+ubuntu22.04_all.deb"
+    ]
+  }
+provisioner "shell" {
+  inline = [
+    "echo 'krb5-config krb5-config/default_realm string DOTOCEAN.NET' | sudo debconf-set-selections",
+    "echo 'krb5-config krb5-config/kerberos_servers string ipa1.DOTOCEAN.NET' | sudo debconf-set-selections",
+    "echo 'krb5-config krb5-config/admin_server string ipa1.DOTOCEAN.NET' | sudo debconf-set-selections",
+    "DEBIAN_FRONTEND=noninteractive",
+    "sudo apt-get install -y freeipa-client oddjob-mkhomedir",
+    "echo -e 'Name: mkhomedir\nDefault: yes\nPriority: 0\nSession-Type: Additional\nSession:\n  required pam_mkhomedir.so umask=0022 skel=/etc/skel' | sudo tee /usr/share/pam-configs/mkhomedir && sudo chmod 0644 /usr/share/pam-configs/mkhomedir"
+  ]
+}
+
+  provisioner "shell" {
+    inline = [
+      # create a cronjob that runs "sudo ipa-client-install --mkhomedir --force-join --server=ipa1.dotocean.net --domain=dotocean.net --realm=DOTOCEAN.net --principal=admin --password='${var.adminpass}' --unattended" and then removes the cronjob
+      "echo '@reboot root (sudo ipa-client-install --mkhomedir --force-join --enable-dns-updates --ntp-pool='be.pool.ntp.org' --server=ipa1.dotocean.net --domain=dotocean.net --realm=DOTOCEAN.NET --principal=admin --password=${var.adminpass} --unattended; sed -i \"/@reboot root/d\" /etc/crontab)' | sudo tee -a /etc/crontab > /dev/null"
     ]
   }
 

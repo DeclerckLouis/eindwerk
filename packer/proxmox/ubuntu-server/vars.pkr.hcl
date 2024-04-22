@@ -19,3 +19,9 @@ variable "node" {
   type = string
   description = "The node to create the VM on (example: prox10)"
 }
+
+variable "adminpass" {
+  type = string
+  description = "The password for the admin user"
+  sensitive = true
+}
