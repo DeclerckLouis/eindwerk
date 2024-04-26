@@ -19,7 +19,10 @@
 
     - name: Configure freeipa client
       ansible.builtin.command:
-        cmd: ipa-client-install --mkhomedir --force-join --server=ipa.dotocean.io --domain=dotocean.io --realm=DOTOCEAN.IO --principal=admin --password="{{ ipa_admin_pass }}" --unattended
+        cmd: ipa-client-install --mkhomedir --force-join \
+             --server=ipa.dotocean.io --domain=dotocean.io \
+             --realm=DOTOCEAN.IO --principal=admin \
+             --password="{{ ipa_admin_pass }}" --unattended
       changed_when: false
 
     - name: Ensure pam_mkhomedir configuration is present
