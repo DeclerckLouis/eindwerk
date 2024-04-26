@@ -20,6 +20,11 @@ variable "node" {
   description = "The node to create the VM on (example: prox10)"
 }
 
+variable "adminuser" {
+  type = string
+  description = "The username for the admin user"
+}
+
 variable "adminpass" {
   type = string
   description = "The password for the admin user"
