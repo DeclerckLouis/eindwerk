@@ -129,6 +129,7 @@ build {
   # Install docker
   provisioner "shell" {
     inline = [
+      "sudo timedatectl set-timezone Europe/Brussels",
       "sudo apt-get install -y ca-certificates curl gnupg lsb-release",
       "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg",
       "echo \"deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
@@ -140,12 +141,12 @@ build {
   provisioner "shell" {
     inline = [
       "wget https://repo.zabbix.com/zabbix/6.5/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.5-1+ubuntu22.04_all.deb",
-      "sudo dpkg -i zabbix-release_6.4-1+ubuntu22.04_all.deb",
+      "sudo dpkg -i zabbix-release_6.5-1+ubuntu22.04_all.deb",
       "sudo apt-get update -y",
       "sudo apt-get install -y zabbix-agent2 zabbix-agent2-plugin-*",
       "sudo systemctl enable zabbix-agent2",
       "sudo systemctl start zabbix-agent2",
-      "sudo rm zabbix-release_6.4-1+ubuntu22.04_all.deb"
+      "sudo rm zabbix-release_6.5-1+ubuntu22.04_all.deb"
     ]
   }
 provisioner "shell" {
@@ -162,7 +163,7 @@ provisioner "shell" {
   provisioner "shell" {
     inline = [
       # create a cronjob that runs "sudo ipa-client-install --mkhomedir --force-join --server=ipa1.dotocean.net --domain=dotocean.net --realm=DOTOCEAN.net --principal=admin --password='${var.adminpass}' --unattended" and then removes the cronjob
-      "echo '@reboot root (sudo ipa-client-install --mkhomedir --force-join --enable-dns-updates --ntp-pool='be.pool.ntp.org' --server=ipa1.dotocean.net --domain=dotocean.net --realm=DOTOCEAN.NET --principal=admin --password=${var.adminpass} --unattended; sed -i \"/@reboot root/d\" /etc/crontab)' | sudo tee -a /etc/crontab > /dev/null"
+      "echo '@reboot root (sudo ipa-client-install --mkhomedir --force-join --enable-dns-updates --ntp-pool='be.pool.ntp.org' --server=ipa1.dotocean.net --domain=dotocean.net --realm=DOTOCEAN.NET --principal=${var.adminuser} --password=${var.adminpass} --unattended; sed -i \"/@reboot root/d\" /etc/crontab)' | sudo tee -a /etc/crontab > /dev/null"
     ]
   }
 
