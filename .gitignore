@@ -15,4 +15,5 @@ vault.yaml
 *.crt
 *.key
 *inventory.yml
-01_MAIN/*
+*ansible.cfg
+# 01_MAIN/*
