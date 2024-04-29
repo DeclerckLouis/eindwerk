@@ -4,7 +4,7 @@ This contains all the working configurations etc for the final project.
 ## Diagram
 The following diagram shows a typical run of the project. (VM Creation)  
 
-```Mermaid
+```mermaid
 sequenceDiagram
     participant User
     participant NetBox
