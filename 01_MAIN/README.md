@@ -47,8 +47,26 @@ sequenceDiagram
     Event-Driven Ansible-->>Event-Driven Ansible: Drop event (no matching rules)
     Event-Driven Ansible-->>Ansible (runner): Run playbook
     Ansible (runner)-->>Ansible (runner): Check existence, <br/>status, etc
-    Ansible (runner)-->>Terrafom: Delete Resource
+    Ansible (runner)-->>Terraform: Delete Resource
     Terraform-->>ProxMox: Destroy VM
     ProxMox-->>Terraform: VM deleted
     Terraform-->>Ansible (runner): "Finished"
+```
+
+
+## Seperate Components
+
+### NetBox
+```mermaid
+graph TD
+    U[User] <--> |UI| A[NetBox]
+    A --> |Webhook| B[Event-driven-ansible]
+    B --> |Ansible-Runner| P[Ansible playbooks]
+    P --> |API Call| A
+    A --> |Webhook| N[n8n]
+    N --> |API Call| D[Notion]
+    D <--> |UI| U2[Another User]
+    A --> |API Call| S[Other Scripts]
+    S --> |something| Z[Something else]
+    Z --> |Some Feedback| A
 ```
