@@ -1,0 +1,4 @@
+#!/bin/bash
+# Decrypt all ansible vault files
+for i in $(find . -name vault.y*ml); do ansible-vault encrypt $i && echo $i encrypted ; done
+for i in $(find . -name *.tfvars); do ansible-vault encrypt $i && echo $i ecnrypted ; done
