@@ -2,20 +2,48 @@
 ## What is this project about?
 This repository contains the code and documentation for my end-of-studies project.
 The project is about developing (and implementing) an infrastructure automation stack.  
-The stack consists of a few different layers and components, which have the follwing architecture:
+The stack consists of a few different layers and components, they're all linked in a pretty complicated way, the full overview is at the **bottom of this page**  
+
+### Basics
+At it's most basic form, the flow is as follows:
 ```mermaid
-graph TD
-    A[NetBox] --> |Webhook-trigger| B[Event-driven-ansible]
-    B --> |Trigger parameters| C[Ansible playbooks]
-    C --> |Variables| D[Terraform configuration templates]
-    C --> |variables| E[Packer configuration templates]
-    D --> |Terraform configs| F[Ansible playbooks]
-    E --> |Packer configs| F
-    F --> |vm-specific config| G[ProxMox Node]
-    F --> |Service-specific config| H[Virtual Machines]
-    G --> |Status| I[Zabbix]
-    H --> |Status| I
-    I --> |Alerts| B
+graph LR
+    User --> |1|NetBox
+    NetBox --> |2|EDA[Event-Driven Ansible]
+    EDA --> |3|Ansible-playbooks
+    Ansible-playbooks --> |4|Terraform
+    Terraform --> |5|ProxMox
+    ProxMox --> |6|Terraform
+    Terraform --> |7|Ansible-playbooks
+    Ansible-playbooks --> |8|NetBox
+    NetBox --> |9|User
+```
+
+Looking at it a bit closer it looks like this:  
+**This is a high-level overview, (leaving out some components but it shows the general flow)**  
+more flows can be found at [01_main](./01_MAIN/)
+```mermaid
+sequenceDiagram
+    participant User
+    participant NetBox
+    participant Event-Driven Ansible
+    participant Ansible (runner)
+    participant Terraform
+    participant ProxMox
+    participant n8n
+    participant Notion
+    User-->>NetBox: New VM created
+    NetBox-->>Event-Driven Ansible: Webhook
+    Event-Driven Ansible-->>Ansible (runner): Run playbook
+    Ansible (runner)-->>Ansible (runner): Check existence, <br/>status, etc
+    Ansible (runner)-->>NetBox: VM status: "Staged"
+    Ansible (runner)-->>Terraform: New Resource
+    Terraform-->>ProxMox: Create VM
+    ProxMox-->>Terraform: VM IP, MAC, etc
+    Terraform-->>Ansible (runner): tfstate
+    Ansible (runner)-->>NetBox: VM status: "Active", IP, MAC, etc
+    NetBox-->>n8n: Webhook
+    n8n-->>Notion: Create new page
 ```
 
 ## A quick rundown of the different components / layers
@@ -111,6 +139,24 @@ graph TD
     S --> |Secrets| E
     S --> |Secrets| F
 ```
+
+## Appendix
+### The full overview
+```mermaid
+graph TD
+    A[NetBox] --> |Webhook-trigger| B[Event-driven-ansible]
+    B --> |Trigger parameters| C[Ansible playbooks]
+    C --> |Variables| D[Terraform configuration templates]
+    C --> |variables| E[Packer configuration templates]
+    D --> |Terraform configs| F[Ansible playbooks]
+    E --> |Packer configs| F
+    F --> |vm-specific config| G[ProxMox Node]
+    F --> |Service-specific config| H[Virtual Machines]
+    G --> |Status| I[Zabbix]
+    H --> |Status| I
+    I --> |Alerts| B
+```
+
 
 ## More information
 For more information about the different concepts, see the [concepts explained](concepts_explained/) section.  
