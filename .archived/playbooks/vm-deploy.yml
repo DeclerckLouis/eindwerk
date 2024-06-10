@@ -1,0 +1,238 @@
+---
+- name: A terraform setup playbook
+  hosts: AutomationController
+  gather_facts: true
+  become: true
+  pre_tasks:
+    - name: Announce the event
+      ansible.builtin.debug:
+        msg: >
+          Creating VM: {{ ansible_eda.event.payload.data.name }}
+
+    - name: Update NetBox VM state to staged
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io{{ ansible_eda.event.payload.data.url }}"
+        method: PATCH
+        body_format: json
+        body: '{"status": "staged"}'
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+      failed_when: false
+
+    - name: Create the Virtual Interface
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io/api/virtualization/interfaces/"
+        method: POST
+        body_format: json
+        body: '{
+          "virtual_machine": "{{ ansible_eda.event.payload.data.id }}",
+          "name": "{{ ansible_eda.event.payload.data.name }}",
+          "type": "virtual",
+          "enabled": true
+          }'
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+      register: virtual_interface
+      failed_when: false
+      when: ansible_eda.event.payload.event == "created"
+
+    - name: Set interface ID when created
+      ansible.builtin.set_fact:
+        interface_id: "{{ virtual_interface.json.id }}"
+      when: ansible_eda.event.payload.event == "created"
+
+    - name: Get the Virtual Interface when updated
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io/api/virtualization/interfaces/?virtual_machine_id={{ ansible_eda.event.payload.data.id }}"
+        method: GET
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+      register: virtual_interface
+      failed_when: false
+      when: ansible_eda.event.payload.event == "updated"
+
+    - name: Set interface ID when updated
+      ansible.builtin.set_fact:
+        interface_id: "{{ virtual_interface.json.results[0].id }}"
+      when: ansible_eda.event.payload.event == "updated"
+
+  tasks:
+  # First, check if there is already a vmname.tf file in the terraform directory
+    - name: Check if the terraform plan exists
+      ansible.builtin.stat:
+        path: /opt/vm-config/terraform/{{ ansible_eda.event.payload.data.name }}.tf
+      register: terraform_plan
+
+    - name: Check the VM tags
+      ansible.builtin.set_fact:
+        vm_tags: "{{ ansible_eda.event.payload.data.tags }}"
+
+    # When the plan doesn't exist and the event is a create event, create the terraform plan.
+    - name: Create / update terraform resource file
+      ansible.builtin.template:
+        src: templates/resource.tf.j2
+        dest: /opt/vm-config/terraform/{{ ansible_eda.event.payload.data.name }}.tf
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Apply terraform resource
+      ansible.builtin.command:
+        cmd: terraform apply -auto-approve
+        chdir: /opt/vm-config/terraform/
+      changed_when: true
+
+    # # Cannot possibly work until the IP address is known :( # THANKS TO TERRAFORM, IT IS!
+    # - name: Import Zabbix setup playbook if zabbix tag is present
+    #   import_playbook: ./zabbix-setup/main.yml
+    #   when: ('zabbix' in vm_tags | selectattr('name', 'equalto', 'zabbix') | map(attribute='name') | list)
+    - name: Read Terraform state file
+      ansible.builtin.command:
+        cmd: cat /opt/vm-config/terraform/terraform.tfstate
+      register: tfstate
+      changed_when: false
+
+    - name: Load Terraform state
+      ansible.builtin.set_fact:
+        terraform_state: "{{ lookup('file', '/opt/vm-config/terraform/terraform.tfstate') | from_json }}"
+
+    - name: Get MAC addresses
+      ansible.builtin.set_fact:
+        mac_address: "{{ terraform_state.resources[0].instances[0].attributes.network_device[0].mac_address }}"
+
+    - name: Get IP address
+      ansible.builtin.set_fact:
+        ip_address: "{{ terraform_state.resources[0].instances[0].attributes.ipv4_addresses[1][0] }}"
+
+    - name: Debug MAC addresses
+      ansible.builtin.debug:
+        var: mac_address
+
+    - name: Debug IP address
+      ansible.builtin.debug:
+        var: ip_address
+
+    # - name: Check IP address from Terraform state (DHCP)
+    #   ansible.builtin.set_fact:
+    #     ip_address: "{{ ((tfstate.stdout | from_json).resources
+    #         | selectattr('name', 'equalto', ansible_eda.event.payload.data.name)
+    #         | map(attribute='instances') | list | first
+    #         | map(attribute='attributes.ipv4_addresses') | list | first | last) }}"
+    #   when: ansible_eda.event.payload.data.primary_ip4 is none
+    #   failed_when: false
+
+    # - name: Check IP address from Terraform state (static)
+    #   ansible.builtin.set_fact:
+    #     ip_address: "{{ ((tfstate.stdout | from_json).resources
+    #         | selectattr('name', 'equalto', ansible_eda.event.payload.data.name)
+    #         | map(attribute='instances') | list | first
+    #         | map(attribute='attributes.initialization') | list | first
+    #         | map(attribute='ip_config') | list | first
+    #         | map(attribute='ipv4') | list | first
+    #         | map(attribute='address') | list | first) }}"
+    #   when: ansible_eda.event.payload.data.primary_ip4 is not none
+    #   failed_when: false
+
+    - name: Update NetBox Interface with MAC address
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io/api/virtualization/interfaces/{{ interface_id }}/"
+        method: PATCH
+        body_format: json
+        body: '{
+          "name": "{{ ansible_eda.event.payload.data.name }}",
+          "virtual_machine": {{ ansible_eda.event.payload.data.id }},
+          "mac_address": "{{ mac_address }}",
+          "description": "Terraformed MAC address"
+          }'
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+        follow_redirects: all
+      register: nb_interface
+      # failed_when: false
+
+    - name: Create IPAM IP address # The static /24 might cause trouble in the long run
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io/api/ipam/ip-addresses/"
+        method: POST
+        body_format: json
+        body: '{
+          "address": "{{ ip_address[0] }}/24",
+          "status": "dhcp",
+          "description": "Terraformed IP address",
+          "assigned_object_type": "virtualization.vminterface",
+          "assigned_object_id": {{ interface_id }}
+          }'
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+      register: nb_ip
+      failed_when: false
+      when: ansible_eda.event.payload.event == "created"
+
+    - name: Get current IP address
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io/api/ipam/ip-addresses/?address={{ ansible_eda.event.payload.snapshots.prechange.primary_ip4 }}"
+        method: GET
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+      register: nb_ip
+      failed_when: false
+      when: ansible_eda.event.payload.event == "updated"
+
+    - name: Debug nb_ip
+      ansible.builtin.debug:
+        var: nb_ip
+
+    - name: Set address when created
+      ansible.builtin.set_fact:
+        ip_address: "{{ nb_ip.json.results[0].address }}"
+      when: ansible_eda.event.payload.event == "created"
+
+    - name: Update IPAM IP address when static
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io/api/ipam/ip-addresses/{{ nb_ip.json.id }}/"
+        method: PATCH
+        body_format: json
+        body: '{
+          "address": "{{ ip_address[0] }}/24",
+          "status": "active",
+          "description": "Terraformed IP address",
+          "assigned_object_type": "virtualization.vminterface",
+          "assigned_object_id": {{ interface_id }}
+          }'
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+      when: ansible_eda.event.payload.data.primary_ip4 is not none and terraform_state.resources[0].instances[0].attributes.initialization[0].ip_config[0].ipv4.address is != "dhcp"
+      failed_when: false
+
+    - name: Update NetBox VM with IP address
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io/api/virtualization/virtual-machines/{{ ansible_eda.event.payload.data.id }}/"
+        method: PATCH
+        body_format: json
+        body: '{
+          "primary_ip4": {{ nb_ip.json.id }}
+          }'
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+      failed_when: false
+
+  post_tasks:
+    - name: Update NetBox VM state to Active
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io{{ ansible_eda.event.payload.data.url }}"
+        method: PATCH
+        body_format: json
+        body: '{"status": "active"}'
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+
+# TODO: add zabbix tag processing, so that -> if zabbix tag, start zabbix config

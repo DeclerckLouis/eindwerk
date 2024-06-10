@@ -1,0 +1,50 @@
+---
+- name: Install and configure zabbix agent
+  hosts: "{{ ansible_eda.event.payload.data.name }}"
+  become: true
+  gather_facts: true
+  handlers:
+    - name: Restart zabbix-agent
+      ansible.builtin.systemd:
+        name: zabbix-agent2
+        state: restarted
+        enabled: true
+  tasks:
+    - name: Stop zabbix-agent
+      ansible.builtin.systemd:
+        name: zabbix-agent
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: Remove zabbix-agentd
+      ansible.builtin.apt:
+        name: zabbix-agent
+        state: absent
+
+    - name: Ensure zabbix-agent2 is installed
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: true
+      with_items:
+        - zabbix-agent2
+        - zabbix-agent2-plugin-*
+
+    - name: Delete agentd config if present
+      ansible.builtin.file:
+        path: /etc/zabbix/zabbix_agentd.conf
+        state: absent
+
+    - name: Copy zabbix agent configuration
+      ansible.builtin.template:
+        src: zabbix_agent2.conf.j2
+        dest: /etc/zabbix/zabbix_agent2.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart zabbix-agent
+
+    # import the zabbix-server playbook
+    - name: Import zabbix-server playbook
+      import_playbook: zabbix-server.yml

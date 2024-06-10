@@ -1,0 +1,43 @@
+---
+- name: Add hosts to zabbix
+  hosts: zabbix
+  any_errors_fatal: false
+  gather_facts: false
+  tasks:
+    - name: Set API token
+      ansible.builtin.set_fact:
+        ansible_user: "{{ zabbix_user }}"
+        ansible_zabbix_auth_key: "{{ zabbix_token }}"
+
+    - name: Create a new host or rewrite an existing host's info
+      vars:
+        ansible_network_os: community.zabbix.zabbix
+        ansible_connection: httpapi
+        ansible_httpapi_port: 443
+        ansible_httpapi_use_ssl: true
+        ansible_httpapi_validate_certs: false # Self signed cert
+        ansible_zabbix_url_path: ""  # equals to "/api_jsonrpc.php"
+      become: false
+      delegate_to: zabbix
+      community.zabbix.zabbix_host:
+        host_name: "{{ item }}"
+        visible_name: "{{ item }}"
+        description: "Managed by ansible"
+        interfaces:
+          - type: 1
+            main: 1
+            useip: 1
+            ip: "{{ hostvars[item].ansible_host }}"
+            dns: ""
+            port: 10050
+        host_groups:
+          - DotOcean Network
+        proxy: "" # Zabbix proxy not working yet.
+        link_templates:
+          - Linux by Zabbix agent
+          - Proxmox VE by HTTP
+        inventory_mode: automatic
+        status: enabled
+        state: present
+        force: true
+      loop: "{{ groups['proxmoxes'] }}" # Loop over every proxmox node in the inventory group "proxmoxes"
