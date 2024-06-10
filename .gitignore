@@ -16,4 +16,7 @@ vault.yaml
 *.key
 *inventory.yml
 *ansible.cfg
-# 01_MAIN/*
+01_MAIN*
+# 01_MAIN/rulebooks/misc/rulebook.log
+# 01_MAIN/rulebooks/misc/certgenerator/run
+ansible/dns-certs-to-host
