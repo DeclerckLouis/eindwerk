@@ -1,6 +1,6 @@
 import hvac
 
-tokenfile = "eindwerk/.archived/python_apis/vault-api-tests/secrets/token"
+tokenfile = "path/to/local/tokenfile"
 with open (tokenfile, "r") as tokenfile:
     tokenval = tokenfile.read().strip()
 
