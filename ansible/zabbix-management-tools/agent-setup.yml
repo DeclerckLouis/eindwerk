@@ -1,8 +1,10 @@
 ---
 - name: Install and configure zabbix agent
-  hosts: proxmoxes
+  hosts: agent1
   become: true
   gather_facts: true
+  vars:
+    ansible_user: "ldeclerck"
   handlers:
     - name: Restart zabbix-agent
       ansible.builtin.systemd:

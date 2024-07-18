@@ -1,0 +1,33 @@
+---
+# basic playbook that adds a user to the host, the user is allowed to run sudo and has his own home dir etc
+- name: Setup new user
+  hosts: agent1
+  become: true
+  gather_facts: true
+  vars:
+    ansible_user: "ldeclerck"
+  tasks:
+    - name: Generate password and print it
+      ansible.builtin.debug:
+        msg: "{{ 'password' | password_hash('sha512') }}"
+
+    - name: Add user
+      ansible.builtin.user:
+        name: "giancarlo"
+        state: present
+        shell: /bin/bash
+        createhome: true
+        home: /home/giancarlo
+        groups: sudo
+        append: true
+        password: "{{ 'password' | password_hash('sha512') }}"
+      failed_when: false
+
+    - name: Add user to sudoers
+      ansible.builtin.copy:
+        content: "{{ ansible_user }} ALL=(ALL) NOPASSWD: ALL"
+        dest: /etc/sudoers.d/{{ ansible_user }}
+        owner: root
+        group: root
+        mode: "0440"
+      failed_when: false

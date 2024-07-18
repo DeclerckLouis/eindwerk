@@ -32,7 +32,7 @@
             port: 10050
         host_groups:
           - DotOcean Network
-        proxy: "" # Zabbix proxy not working yet.
+        proxy: "" # Set if used
         link_templates:
           - Linux by Zabbix agent
           - Proxmox VE by HTTP
@@ -40,4 +40,4 @@
         status: enabled
         state: present
         force: true
-      loop: "{{ groups['proxmoxes'] }}" # Loop over every proxmox node in the inventory group "proxmoxes"
+      loop: "{{ groups['monitored'] }}"
