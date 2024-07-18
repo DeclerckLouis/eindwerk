@@ -1,0 +1,69 @@
+---
+- name: Listen for events on a webhook
+  hosts: all
+  ## Define our source for events
+  sources:
+    - ansible.eda.webhook: # Please refer to https://github.com/ansible/event-driven-ansible/blob/main/extensions/eda/plugins/event_source/webhook.py
+        host: 0.0.0.0
+        port: 5000
+        certfile: ./misc/certgenerator/dotOcean-test.crt
+        keyfile: ./misc/certgenerator/dotOcean-test.key
+        # password: "Test123"
+  ## Define the conditions we are looking for
+  rules:
+    - name: Deploy a VM to the ProxMox Cluster
+      condition: >-
+        event.payload.snapshots.postchange.tags contains "terraform" and
+        event.payload.data.cluster.name == "ProxMox_staging" and
+        ((event.payload.data.status.value == "staged" and
+        event.payload.event == "created")
+        or
+        (event.payload.event == "updated" and
+        (event.payload.snapshots.prechange.description != event.payload.snapshots.postchange.description or
+        event.payload.snapshots.prechange.vcpus != event.payload.snapshots.postchange.vcpus or
+        event.payload.snapshots.prechange.memory != event.payload.snapshots.postchange.memory or
+        event.payload.snapshots.prechange.primary_ipv4 != event.payload.snapshots.postchange.primary_ipv4))
+        or
+        (event.payload.data.cluster.name == "ProxMox_staging" and
+        event.payload.snapshots.prechange.tags not contains "terraform" and
+        event.payload.snapshots.postchange.tags contains "terraform"))
+
+      action:
+        debug:
+          msg: "Bonjour!"
+
+
+# TODO
+    - name: update a VM in the ProxMox Cluster
+      condition: >-
+        (event.payload.data.tags contains "terraform" and
+
+        (event.payload.data.cluster.name == "ProxMox_staging" and
+        event.payload.event == "updated" and
+        event.payload.snapshots.prechange.tags != event.payload.snapshots.postchange.tags)
+        or
+        (event.payload.event == "updated" and
+        (event.payload.snapshots.prechange.description != event.payload.snapshots.postchange.description or
+        event.payload.snapshots.prechange.vcpus != event.payload.snapshots.postchange.vcpus or
+        event.payload.snapshots.prechange.memory != event.payload.snapshots.postchange.memory or
+        event.payload.snapshots.prechange.primary_ipv4 != event.payload.snapshots.postchange.primary_ipv4)))
+      action:
+        run_playbook:
+          name: ../playbooks/vm-destroy.yml
+
+    # - name: Say Hello
+    #   condition:
+    #     all:
+    #       - event.payload.data.cluster.name == "k8s_staging"
+    #   action:
+    #     run_playbook:
+    #       name: playbook_echo2.yml
+
+# sources:
+# https://ansible.readthedocs.io/projects/rulebook/en/stable/conditions.html#check-if-an-item-exists-in-a-list
+
+# Start this rulebook
+# ansible-rulebook -r webhook.yml -i ../inventories -vv
+
+# Known issues (netbox)
+# https://github.com/netbox-community/netbox/issues/15387

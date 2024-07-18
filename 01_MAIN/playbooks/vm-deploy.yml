@@ -1,0 +1,261 @@
+---
+- name: A VM deployment playbook
+  hosts: AutomationController
+  gather_facts: true
+  become: true
+  pre_tasks:
+    - name: "CHECK- Check if the EDA prechange status is 'staged'" # To stop endless loops after the first run, noqa for linter
+      ansible.builtin.fail:
+        msg: "The prechange status is 'staged', not pushing changes"
+      when: (
+        (ansible_eda.event.payload.snapshots.prechange.status == "staged" and ansible_eda.event.payload.event.payload.snapshots.postchange.status == "active")
+        or
+        (ansible_eda.event.payload.snapshots.prechange.status == "staged" and ansible_eda.event.payload.event.payload.snapshots.postchange.status == "staged")
+        )
+      ignore_errors: true
+
+  tasks:
+#### Announce the start of the playbook
+    - name: "DEBUG- Announce the event"
+      ansible.builtin.debug:
+        msg: >
+          Creating / updating VM: {{ ansible_eda.event.payload.data.name }}
+
+#### Let NetBox know the VM is being staged
+    - name: "NEW- Update NetBox VM state to staged"
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io{{ ansible_eda.event.payload.data.url }}"
+        method: PATCH
+        body_format: json
+        body: '{"status": "staged"}'
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+
+    # Checks for existence
+    - name: "CHECK- Check if the terraform plan exists"
+      ansible.builtin.stat:
+        path: /opt/vm-config/terraform/{{ ansible_eda.event.payload.data.name }}.tf
+      register: terraform_plan
+
+    - name: "CHECK- Check if Virtual Interface exists"
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io/api/virtualization/interfaces/?virtual_machine_id={{ ansible_eda.event.payload.data.id }}"
+        method: GET
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+      register: current_nb_virtual_interface
+
+    - name: "DEBUG- Debug the used URL"
+      ansible.builtin.debug:
+        var: current_nb_virtual_interface
+
+    - name: "CHECK- Check if IP address exists in NetBox"
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io/api/ipam/ip-addresses/?address={{ ansible_eda.event.payload.data.primary_ip4.address
+          if ansible_eda.event.payload.data.primary_ip4 is not none and ansible_eda.event.payload.data.primary_ip4.address is defined
+          else 'invalid' }}"
+        method: GET
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+      register: current_nb_ip_address
+
+    # - name: "DEBUG- Debug the used URL"
+    #   ansible.builtin.debug:
+    #     msg: "https://infra.dotocean.io/api/ipam/ip-addresses/?address={{ ansible_eda.event.payload.data.primary_ip4.address
+    #       if ansible_eda.event.payload.data.primary_ip4 is not none and ansible_eda.event.payload.data.primary_ip4.address is defined
+    #       else None }}"
+
+    # - name: "DEBUG- current_nb_ip_address"
+    #   ansible.builtin.debug:
+    #     var: current_nb_ip_address
+
+#### Set required variables
+    - name: "VAR- Set the nb_virtual_interface_exists var"
+      ansible.builtin.set_fact:
+        nb_virtual_interface_exists: "{{ current_nb_virtual_interface.json.count > 0 }}"
+
+    - name: "VAR- Set the nb_ip_address_exists var"
+      ansible.builtin.set_fact:
+        nb_ip_address_exists: "{{ current_nb_ip_address.json.count > 0 }}"
+
+    - name: "VAR- Set interface ID var when updated"
+      ansible.builtin.set_fact:
+        interface_id: "{{ current_nb_virtual_interface.json.results[0].id }}"
+      when: nb_virtual_interface_exists
+
+# i don't think that there's any point in reading it here?
+    - name: "DEBUG- nb_virtual_interface_exists"
+      ansible.builtin.debug:
+        var: nb_virtual_interface_exists
+
+    - name: "DEBUG- nb_ip_address_exists"
+      ansible.builtin.debug:
+        var: nb_ip_address_exists
+
+    - name: "DEBUG- interface_id"
+      ansible.builtin.debug:
+        var: interface_id
+
+    - name: "DEBUG- primary_ip4"
+      ansible.builtin.debug:
+        var: ansible_eda.event.payload.data.primary_ip4
+
+    - name: "DEBUG- current_nb_ip_address"
+      ansible.builtin.debug:
+        var: current_nb_ip_address
+      when: nb_ip_address_exists
+
+    - name: "VAR- Set ip_address to DHCP when no IP address is present or when the current IP address is DHCP"
+      ansible.builtin.set_fact:
+        ip_address: "dhcp"
+      when: ansible_eda.event.payload.data.primary_ip4 is none
+        or (nb_ip_address_exists and current_nb_ip_address.json.results[0].status.value == "dhcp")
+
+    - name: "VAR- Set ip_address to the current IP address when it is not DHCP" # what about the subnet mask?
+      ansible.builtin.set_fact:
+        ip_address: "{{ ansible_eda.event.payload.data.primary_ip4.address }}"
+      when: nb_ip_address_exists and current_nb_ip_address.json.results[0].status.value != "dhcp"
+
+    - name: "TERRAFORM- Fill in the terraform resource file"
+      ansible.builtin.template:
+        src: templates/resource.tf.j2
+        dest: /opt/vm-config/terraform/{{ ansible_eda.event.payload.data.name }}.tf
+        owner: root
+        group: root
+        mode: "0644"
+
+### This is essentialy the pivotal point, after this, the vars from the tfstate file have to be re-read
+    - name: "TERRAFORM- Deploy terraform resource"
+      ansible.builtin.command:
+        cmd: terraform apply -auto-approve
+        chdir: /opt/vm-config/terraform/
+      changed_when: true
+
+    - name: "VAR- Update the Terraform state file"
+      ansible.builtin.command:
+        cmd: terraform refresh
+        chdir: /opt/vm-config/terraform/
+      changed_when: true
+
+    - name: "VAR- Read the UPDATED Terraform state file"
+      ansible.builtin.set_fact:
+        terraform_state: "{{ lookup('file', '/opt/vm-config/terraform/terraform.tfstate') | from_json }}"
+
+    - name: "VAR- Get MAC address" # Must map the items in the list and select the one that matches the event.payload.data.name
+      ansible.builtin.set_fact:
+        mac_address: >-
+          {{
+            (
+              terraform_state.resources
+              | selectattr('name', 'equalto', ansible_eda.event.payload.data.name | lower | replace(' ', '-' | replace('_', '-')))
+              | list
+              | first
+            ).instances[0].attributes.network_device[0].mac_address
+          }}
+
+    - name: "VAR- Get IP address"
+      ansible.builtin.set_fact:
+        ip_address: >-
+          {{
+            (
+              terraform_state.resources
+              | selectattr('name', 'equalto', ansible_eda.event.payload.data.name | lower | replace(' ', '-' | replace('_', '-')))
+              | list
+              | first
+            ).instances[0].attributes.ipv4_addresses[1][0]
+          }}
+
+    - name: "DEBUG- IP address"
+      ansible.builtin.debug:
+        var: ip_address
+
+    - name: "NETBOX- Create the Virtual Interface"
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io/api/virtualization/interfaces/"
+        method: POST
+        body_format: json
+        body: '{
+          "virtual_machine": "{{ ansible_eda.event.payload.data.id }}",
+          "name": "{{ ansible_eda.event.payload.data.name }}",
+          "mac_address": "{{ mac_address }}",
+          "type": "virtual",
+          "enabled": true
+          }'
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+      register: new_virtual_interface
+      failed_when: false
+      when: not nb_virtual_interface_exists # Can't do nb_virtual_interface_exists == "false" because then ansible sees the entire thing as false
+
+    - name: "VAR- Set interface ID when created"
+      ansible.builtin.set_fact:
+        interface_id: "{{ new_virtual_interface.json.id }}"
+      when: not nb_virtual_interface_exists
+
+    - name: "DEBUG- interface_id"
+      ansible.builtin.debug:
+        var: interface_id
+
+    - name: Create IPAM IP address # The static /24 might cause trouble in the long run
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io/api/ipam/ip-addresses/"
+        method: POST
+        body_format: json
+        body: '{
+          "address": "{{ ip_address }}/24",
+          "status": "dhcp",
+          "description": "VM - Terraformed",
+          "dns_name": "{{ ansible_eda.event.payload.data.name }}",
+          "assigned_object_type": "virtualization.vminterface",
+          "tags": ["10"],
+          "assigned_object_id": {{ interface_id }}
+          }'
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+      register: nb_ip
+      failed_when: false
+      when: ansible_eda.event.payload.event == "created"
+
+    - name: "VAR- Set nb_ip when updated"
+      ansible.builtin.set_fact:
+        nb_ip: {
+          "json":
+            {
+              "id": "{{ current_nb_ip_address }}/24"
+            }
+        }
+      when: ansible_eda.event.payload.event == "updated"
+
+    - name: "DEBUG- nb_ip"
+      ansible.builtin.debug:
+        var: nb_ip
+
+    - name: Update NetBox VM with IP address # Status active not working
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io/api/virtualization/virtual-machines/{{ ansible_eda.event.payload.data.id }}/"
+        method: PATCH
+        body_format: json
+        body: '{
+          "primary_ip4": {{ nb_ip.json.id }}
+          }'
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+      register: nb_vm
+      failed_when: false
+
+  post_tasks:
+    - name: Update NetBox VM state to Active
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io{{ ansible_eda.event.payload.data.url }}"
+        method: PATCH
+        body_format: json
+        body: '{"status": "active"}'
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}

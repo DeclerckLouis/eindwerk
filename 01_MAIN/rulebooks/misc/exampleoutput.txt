@@ -1,0 +1,133 @@
+TASK [Debug a message] *********************************************************
+ok: [localhost] => {
+    "msg": "PROXMOX, Thank you, my friend!"
+}
+
+TASK [Debug all variables] *****************************************************
+ok: [localhost] => {
+    "ansible_eda.event": {
+        "meta": {
+            "endpoint": "",
+            "headers": {
+                "Accept-Encoding": "identity",
+                "Content-Length": "1708",
+                "Content-Type": "application/json",
+                "Host": "10.10.31.9:5000",
+                "User-Agent": "python-urllib3/2.2.1"
+            },
+            "received_at": "2024-04-15T13:33:00.793856Z",
+            "source": {
+                "name": "ansible.eda.webhook",
+                "type": "ansible.eda.webhook"
+            },
+            "uuid": "3b21622b-9151-4960-9a27-4d784001b285"
+        },
+        "payload": {
+            "data": {
+                "cluster": {
+                    "display": "ProxMox_staging",
+                    "id": 1,
+                    "name": "ProxMox_staging",
+                    "url": "/api/virtualization/clusters/1/"
+                },
+                "comments": "",
+                "config_template": null,
+                "created": "2024-04-15T13:33:00.577641Z",
+                "custom_fields": {},
+                "description": "",
+                "device": {
+                    "display": "doto-srv07 (Prox7)",
+                    "id": 1,
+                    "name": "doto-srv07",
+                    "url": "/api/dcim/devices/1/"
+                },
+                "disk": null,
+                "display": "testvm",
+                "id": 14,
+                "interface_count": 0,
+                "last_updated": "2024-04-15T13:33:00.577682Z",
+                "local_context_data": null,
+                "memory": null,
+                "name": "testvm",
+                "platform": null,
+                "primary_ip": null,
+                "primary_ip4": null,
+                "primary_ip6": null,
+                "role": null,
+                "site": {
+                    "display": "DotoceanHQ",
+                    "id": 1,
+                    "name": "DotoceanHQ",
+                    "slug": "dotoceanhq",
+                    "url": "/api/dcim/sites/1/"
+                },
+                "status": {
+                    "label": "Active",
+                    "value": "active"
+                },
+                "tags": [],
+                "tenant": {
+                    "display": "DotOcean",
+                    "id": 1,
+                    "name": "DotOcean",
+                    "slug": "dotocean",
+                    "url": "/api/tenancy/tenants/1/"
+                },
+                "url": "/api/virtualization/virtual-machines/14/",
+                "vcpus": null,
+                "virtual_disk_count": 0
+            },
+            "event": "created",
+            "model": "virtualmachine",
+            "request_id": "4dbb90fc-37f2-46c9-9557-306e82140ea3",
+            "snapshots": {
+                "postchange": {
+                    "cluster": 1,
+                    "comments": "",
+                    "config_template": null,
+                    "created": "2024-04-15T13:33:00.577Z",
+                    "custom_fields": {},
+                    "description": "",
+                    "device": 1,
+                    "disk": null,
+                    "interface_count": 0,
+                    "last_updated": "2024-04-15T13:33:00.577Z",
+                    "local_context_data": null,
+                    "memory": null,
+                    "name": "testvm",
+                    "platform": null,
+                    "primary_ip4": null,
+                    "primary_ip6": null,
+                    "role": null,
+                    "site": 1,
+                    "status": "active",
+                    "tags": [],
+                    "tenant": 1,
+                    "vcpus": null,
+                    "virtual_disk_count": 0
+                },
+                "prechange": null
+            },
+            "timestamp": "2024-04-15T13:33:00.623052+00:00",
+            "username": "louis.declerck"
+        }
+    }
+}
+
+PLAY RECAP *********************************************************************
+localhost                  : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

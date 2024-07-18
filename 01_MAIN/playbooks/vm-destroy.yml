@@ -1,0 +1,31 @@
+---
+- name: A terraform remove VM playbook
+  hosts: AutomationController
+  gather_facts: true
+  become: true
+  pre_tasks:
+    - name: Announce the event
+      ansible.builtin.debug:
+        msg: >
+          Destroying VM: {{ ansible_eda.event.payload.data.name }}
+  tasks:
+  # First, check if there is already a vmname.tf file in the terraform directory
+    - name: Check if the terraform plan exists
+      ansible.builtin.stat:
+        path: /opt/vm-config/terraform/{{ ansible_eda.event.payload.data.name }}.tf
+      register: terraform_plan
+
+    - name: Debug the terraform_plan
+      ansible.builtin.debug:
+        var: terraform_plan.stat.exists
+
+    - name: Delete terraform resource file
+      ansible.builtin.file:
+        path: /opt/vm-config/terraform/{{ ansible_eda.event.payload.data.name }}.tf
+        state: absent
+
+    - name: Apply terraform plan
+      ansible.builtin.command:
+        cmd: terraform apply -auto-approve
+        chdir: /opt/vm-config/terraform/
+      changed_when: true

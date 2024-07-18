@@ -16,7 +16,9 @@ vault.yaml
 *.key
 *inventory.yml
 *ansible.cfg
-01_MAIN*
-# 01_MAIN/rulebooks/misc/rulebook.log
-# 01_MAIN/rulebooks/misc/certgenerator/run
+# 01_MAIN*
+01_MAIN/rulebooks/misc/rulebook.log
+01_MAIN/rulebooks/misc/certgenerator/*
 ansible/dns-certs-to-host
+01_MAIN/scripts/*
+01_MAIN/packer/proxmox/ubuntu-server/http/user-data

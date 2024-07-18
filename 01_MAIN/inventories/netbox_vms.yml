@@ -1,0 +1,21 @@
+plugin: netbox.netbox.nb_inventory
+api_endpoint: https://infra.dotocean.io
+validate_certs: false
+config_context: false
+fetch_all: false
+compose:
+  ansible_host: primary_ipv4.address.split('/')[0] # No longer needed to split but why not
+
+group_by:
+  - cluster
+  - tags
+# query_filters:
+#   - has_primary_ip: "true"
+
+# I don't mind the fact that the HCP Vault token is hardcoded here, it's host-specific (thank you HashiCorp Vault)
+token: "{{ lookup('hashi_vault',
+          'secret=automationcontroller/data/netbox:netbox_token
+          token=hvs.CAESIA48FXhxrEGPbZYSe5nLEupqywTp5X_x1RWrB3KVq9EdGh4KHGh2cy5hTTA2bmw5VWF4a0Q4emxSS1hvMW55Znc
+          url=https://vault.dotocean.io:8200
+          validate_certs=false') }}"
+  # hvs.CAESIJQ50LucRBTgM_WS0y9J_UXPbVopGjbuRN6-NAsUIw2nGh4KHGh2cy5HQVEwM0NyNUFTdnJTeWQ4T0xsOXRSNG8

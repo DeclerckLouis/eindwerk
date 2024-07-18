@@ -1,0 +1,18 @@
+---
+- name: Name of the rulebook
+  hosts: all
+  sources:
+    - ansible.eda.webhook:
+        host: 0.0.0.0
+        port: 5000
+        certfile: certfile.crt
+        keyfile: keyfile.key
+  rules:
+    - name: Name of the ruleset
+      condition: >-
+        event.this contains "that" and
+        event.that == "something" or
+        event.anotherthing != "somethingelse"
+      action:
+        run_playbook:
+          name: someplaybook.yml

@@ -1,0 +1,34 @@
+---
+- name: A terraform setup playbook
+  hosts: AutomationController
+  gather_facts: false
+  become: true
+  tasks:
+    # tasks file for terraform-setup
+    - name: Create terraform environment
+      ansible.builtin.file:
+        path: /opt/vm-config/terraform
+        state: directory
+        mode: '0755'
+
+    - name: Copy provider config
+      ansible.builtin.copy:
+        src: files/provider.tf
+        dest: /opt/vm-config/terraform/provider.tf
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Create terraform credentials file
+      ansible.builtin.template:
+        src: vars.auto.tfvars.j2
+        dest: /opt/vm-config/terraform/vars.auto.tfvars
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Init terraform
+      ansible.builtin.command:
+        cmd: terraform init
+        chdir: /opt/vm-config/terraform/
+      changed_when: true

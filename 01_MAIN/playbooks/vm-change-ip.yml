@@ -1,0 +1,97 @@
+---
+- name: A VM change IP playbook
+  hosts: AutomationController
+  gather_facts: true
+  become: true
+  tasks:
+    - name: "CHECK- Check if the received IP address interface is managed by Terraform"
+      ansible.builtin.uri:
+        url: >
+          "https://infra.dotocean.io/api/virtualization/interfaces/
+          {{ ansible_eda.event.payload.snapshots.postchange.assigned_object_id }}"
+        method: GET
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+      register: current_nb_virtual_interface
+      failed_when: false # Fails every time?
+
+    - name: "CHECK- Check if the VM resource file exists"
+      ansible.builtin.stat:
+        path: /opt/vm-config/terraform/{{ current_nb_virtual_interface.json.virtual_machine.name }}.tf
+      register: terraform_resource
+
+    - name: "UPDATE- update the IP address STATIC in the terraform resource file"
+      ansible.builtin.replace:
+        path: /opt/vm-config/terraform/{{ current_nb_virtual_interface.json.virtual_machine.name }}.tf
+        regexp: 'address = ".*?"'
+        replace: "address = \"{{ ansible_eda.event.payload.snapshots.postchange.address }}\""
+      when: terraform_resource.stat.exists and ansible_eda.event.payload.snapshots.postchange.status != 'dhcp'
+
+    - name: "UPDATE- update the gateway STATIC in the terraform resource file" # Remove the last octet of the IP address and replace it with .1
+      ansible.builtin.replace:
+        path: /opt/vm-config/terraform/{{ current_nb_virtual_interface.json.virtual_machine.name }}.tf
+        regexp: 'gateway = ".*?"'
+        replace: "gateway = \"{{ (ansible_eda.event.payload.snapshots.postchange.address.split('.')[:-1] | join('.')) + '.1' }}\""
+      when: terraform_resource.stat.exists and ansible_eda.event.payload.snapshots.postchange.status != 'dhcp'
+
+    - name: "UPDATE- update the IP address DHCP in the terraform resource file"
+      ansible.builtin.replace:
+        path: /opt/vm-config/terraform/{{ current_nb_virtual_interface.json.virtual_machine.name }}.tf
+        regexp: 'address = ".*?"'
+        replace: "address = \"dhcp\""
+      when: terraform_resource.stat.exists and ansible_eda.event.payload.snapshots.postchange.status == 'dhcp'
+
+    - name: "UPDATE- update the gateway DHCP in the terraform resource file"
+      ansible.builtin.replace:
+        path: /opt/vm-config/terraform/{{ current_nb_virtual_interface.json.virtual_machine.name }}.tf
+        regexp: 'gateway = ".*?"'
+        replace: "gateway = \"\""
+      when: terraform_resource.stat.exists and ansible_eda.event.payload.snapshots.postchange.status == 'dhcp'
+
+    - name: "Apply the terraform plan"
+      ansible.builtin.command:
+        cmd: terraform apply -auto-approve
+        chdir: /opt/vm-config/terraform/
+      changed_when: true
+      when: terraform_resource.stat.exists
+
+    - name: "VAR- Update the Terraform state file"
+      ansible.builtin.command:
+        cmd: terraform refresh
+        chdir: /opt/vm-config/terraform/
+      changed_when: true
+
+    - name: "DEBUG- Read the UPDATED Terraform state file"
+      ansible.builtin.set_fact:
+        terraform_state: "{{ lookup('file', '/opt/vm-config/terraform/terraform.tfstate') | from_json }}"
+
+    - name: "VAR- Get IP address"
+      ansible.builtin.set_fact:
+        ip_address: >-
+          {{
+            (
+              terraform_state.resources
+              | selectattr('name', 'equalto', current_nb_virtual_interface.json.virtual_machine.name | lower | replace(' ', '-' | replace('_', '-')))
+              | list
+              | first
+            ).instances[0].attributes.ipv4_addresses[1][0]
+          }}
+
+    - name: "DEBUG- Show the IP address"
+      ansible.builtin.debug:
+        msg: "The IP address is {{ ip_address }}"
+
+    - name: Update NetBox VM with IP address # the /24 will cause problems in the very long run
+      ansible.builtin.uri:
+        url: "https://infra.dotocean.io/api/virtualization/virtual-machines/{{ ansible_eda.event.payload.snapshots.postchange.assigned_object_id }}/"
+        method: PATCH
+        body_format: json
+        body: '{
+          "primary_ip4": "{{ ansible_eda.event.payload.snapshots.postchange.assigned_object_id }}/24"
+          }'
+        headers:
+          Content-Type: application/json
+          Authorization: Token {{ nb_token }}
+      register: nb_vm
+      failed_when: false

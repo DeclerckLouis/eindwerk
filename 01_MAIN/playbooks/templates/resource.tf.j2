@@ -1,0 +1,56 @@
+resource "proxmox_virtual_environment_vm" "{{ ansible_eda.event.payload.data.name | replace(".", "-") | lower | replace(" ", "-") }}" {
+  name      = "{{ ansible_eda.event.payload.data.name | replace ("_", "-") | lower | replace(" ", "-") }}"
+  node_name = var.node # TODO: make this dynamic, a variable possibly passed from an ansible playbook
+  description = " Deployed using terraform,  \n Netbox Description: {{ ansible_eda.event.payload.data.description | replace('"', "'") }} "
+  tags = [
+  {% for tag in ansible_eda.event.payload.data.tags %}
+    {% if tag.name != '' %}
+    "{{ tag.name }}",
+    {% endif %}
+  {% endfor %}
+  "{{ ansible_eda.event.payload.username }}"
+  ]
+
+  clone {
+    full         = true
+    vm_id        = 400
+    datastore_id = "vm-store"
+    node_name = var.templatenode
+  }
+
+
+  cpu {
+    cores = {{ ansible_eda.event.payload.data.vcpus if ansible_eda.event.payload.data.vcpus is not none else 2 }}
+    sockets = 1
+  }
+
+  memory {
+    dedicated = {{ ansible_eda.event.payload.data.memory if ansible_eda.event.payload.data.memory is not none else 2048 }}
+  }
+
+  network_device {
+    vlan_id = 0
+    bridge = "vmbr0"
+  }
+
+  initialization {
+    datastore_id = "vm-store"
+    ip_config {
+      ipv4 {
+        address = "{{ ip_address }}"
+        gateway = "{{ (ip_address('.')[:-1] | join('.')) + '.1' if ip_address != "dhcp" else '' }}"
+      }
+    }
+    dns {
+      domain  = "dotocean.net"
+    }
+  }
+
+  started       = true
+  timeout_clone = 300
+
+  agent {
+    enabled = true
+  }
+
+}

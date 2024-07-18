@@ -1,0 +1,7 @@
+pm_api_endpoint: "{{ vault_pm_api_endpoint }}"
+pm_api_token: "{{ vault_pm_api_token }}"
+ansible_become_method: sudo
+ansible_become_user: root
+ansible_become_password: "{{ vault_ansible_become_password }}"
+templatenode: "doto-srv10"
+leastusednode: "doto-srv13" # TODO: MAKE THIS DYNAMIC WITH SCRIPT

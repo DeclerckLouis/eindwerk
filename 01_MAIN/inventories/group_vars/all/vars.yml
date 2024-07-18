@@ -1,0 +1,7 @@
+ansible_user: "{{ vault_ansible_user }}"
+ansible_private_key_file: "{{ vault_private_key_file }}"
+hcp_vault_url: "{{ vault_hcp_vault_url }}"
+hcp_vault_token: "{{ vault_hcp_vault_token }}"
+nb_token: "{{ vault_nb_token }}"
+ansible_port: 22
+ansible_ssh_common_args: "-o StrictHostKeyChecking=no"

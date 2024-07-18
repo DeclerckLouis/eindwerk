@@ -1,0 +1,5 @@
+ansible_connection: local
+ansible_user: "{{ vault_ansible_user }}"
+ansible_become_method: sudo
+ansible_become_user: root
+ansible_become_password: "{{ vault_ansible_become_password }}"

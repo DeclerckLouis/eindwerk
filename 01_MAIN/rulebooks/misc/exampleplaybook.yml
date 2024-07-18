@@ -1,0 +1,18 @@
+---
+- name: An example playbook
+  hosts: AutomationController # this is the name of a host in NetBox
+  gather_facts: true
+  become: true
+  pre_tasks:
+    - name: "Some check" # To stop endless loops after the first run, noqa for linter
+      ansible.builtin.fail:
+        msg: "Running the playbook failed"
+      when:
+        some_condition is true
+      ignore_errors: true
+
+  tasks:
+    ####
+    # Some EDA event variable handling
+    ####
+
